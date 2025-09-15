@@ -11,11 +11,15 @@ import { generateCampaign } from '../services/geminiService';
 import LoadingScreen from './LoadingScreen';
 import ErrorScreen from './ErrorScreen';
 import ToolHeader from './ToolHeader';
+import { useCreationHistory } from '../contexts/CreationHistoryProvider';
+import { useBrand } from '../contexts/BrandProvider';
 
 const CampaignGeneratorScreen: React.FC = () => {
     const { t } = useTranslations();
     const { setCampaignResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
+    const { addCreation } = useCreationHistory();
+    const { brandPersona } = useBrand();
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
     const [targetAudience, setTargetAudience] = useState('');
@@ -31,8 +35,9 @@ const CampaignGeneratorScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const campaign = await generateCampaign({ name: productName, description: productDescription, targetAudience });
-            setCampaignResult(campaign);
+            const campaign = await generateCampaign({ name: productName, description: productDescription, targetAudience }, brandPersona);
+            const creation = addCreation('campaign-generator', campaign);
+            setCampaignResult({ result: campaign, creation });
             incrementToolUsage('campaign-generator');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');

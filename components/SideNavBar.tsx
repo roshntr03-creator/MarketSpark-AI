@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import type { Screen } from '../App';
+// FIX: Corrected the import path for the Screen type. It is defined in types/index.ts, not App.tsx.
+import type { Screen } from '../types/index';
 import { useTranslations } from '../contexts/LanguageProvider';
-import { HomeIcon, WrenchScrewdriverIcon, ChartBarIcon, CogIcon, SparklesIcon } from './icons';
+import { HomeIcon, WrenchScrewdriverIcon, ChartBarIcon, CogIcon, SparklesIcon, CalendarDaysIcon } from './icons';
 
 interface SideNavBarProps {
     activeScreen: Screen;
@@ -40,6 +41,7 @@ const SideNavBar: React.FC<SideNavBarProps> = ({ activeScreen, setActiveScreen }
     const navItems: { screen: Screen; label: string; Icon: React.ElementType; }[] = [
         { screen: 'dashboard', label: t.navDashboard, Icon: HomeIcon },
         { screen: 'tools', label: t.navTools, Icon: WrenchScrewdriverIcon },
+        { screen: 'planner', label: t.navPlanner, Icon: CalendarDaysIcon },
         { screen: 'analytics', label: t.navAnalytics, Icon: ChartBarIcon },
         { screen: 'settings', label: t.navSettings, Icon: CogIcon },
     ];

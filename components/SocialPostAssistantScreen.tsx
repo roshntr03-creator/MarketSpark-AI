@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
@@ -11,20 +11,31 @@ import { generateSocialPosts } from '../services/geminiService';
 import LoadingScreen from './LoadingScreen';
 import ErrorScreen from './ErrorScreen';
 import ToolHeader from './ToolHeader';
+import { useCreationHistory } from '../contexts/CreationHistoryProvider';
+import { useBrand } from '../contexts/BrandProvider';
 
-const platforms = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn'];
+const platforms = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'TikTok'];
 const tones = ['Professional', 'Casual', 'Humorous', 'Informative', 'Excited'];
 
 const SocialPostAssistantScreen: React.FC = () => {
     const { t } = useTranslations();
-    const { setSocialPostsResult, setActiveTool } = useMarketingTools();
+    const { setSocialPostsResult, setActiveTool, initialSocialPostTopic, setInitialSocialPostTopic } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
+    const { addCreation } = useCreationHistory();
+    const { brandPersona } = useBrand();
     const [topic, setTopic] = useState('');
     const [platform, setPlatform] = useState(platforms[0]);
     const [tone, setTone] = useState(tones[0]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (initialSocialPostTopic) {
+            setTopic(initialSocialPostTopic);
+            setInitialSocialPostTopic(null); // Clear it after use
+        }
+    }, [initialSocialPostTopic, setInitialSocialPostTopic]);
+    
     // FIX: Extracted generation logic to a separate function that doesn't take an event.
     const runGeneratePosts = async () => {
         if (!topic) {
@@ -34,8 +45,9 @@ const SocialPostAssistantScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const posts = await generateSocialPosts(topic, platform, tone);
-            setSocialPostsResult(posts);
+            const posts = await generateSocialPosts(topic, platform, tone, brandPersona);
+            const creation = addCreation('social-post-assistant', posts);
+            setSocialPostsResult({ result: posts, creation });
             incrementToolUsage('social-post-assistant', posts.length);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');

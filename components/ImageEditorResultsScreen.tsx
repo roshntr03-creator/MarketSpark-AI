@@ -2,20 +2,24 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React from 'react';
+import React, { useState } from 'react';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
 import ToolHeader from './ToolHeader';
+import ScheduleModal from './ScheduleModal';
+import { PlusCircleIcon } from './icons';
 
 const ImageEditorResultsScreen: React.FC = () => {
     const { imageEditResult, setImageEditResult } = useMarketingTools();
     const { t } = useTranslations();
+    const [isScheduling, setIsScheduling] = useState(false);
 
     if (!imageEditResult) {
         return null;
     }
 
-    const { original, edited, prompt, responseText } = imageEditResult;
+    const { result, creation } = imageEditResult;
+    const { original, edited, prompt, responseText } = result;
 
     const handleStartNew = () => {
         setImageEditResult(null);
@@ -32,6 +36,12 @@ const ImageEditorResultsScreen: React.FC = () => {
 
     return (
         <div className="animate-fade-in max-w-6xl mx-auto pb-8">
+            {isScheduling && (
+                <ScheduleModal
+                    creation={creation}
+                    onClose={() => setIsScheduling(false)}
+                />
+            )}
             <ToolHeader title={t.imageEditorResultsTitle} onBack={handleStartNew} />
 
             <div className="px-4 sm:px-0">
@@ -45,12 +55,21 @@ const ImageEditorResultsScreen: React.FC = () => {
                     <div className="space-y-3">
                         <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-300">{t.editedImage}</h2>
                         <img src={edited} alt="Edited" className="rounded-lg w-full object-contain" />
-                         <button 
-                            onClick={handleDownload}
-                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 text-lg"
-                        >
-                            {t.downloadImage}
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button 
+                                onClick={handleDownload}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 text-lg"
+                            >
+                                {t.downloadImage}
+                            </button>
+                            <button
+                                onClick={() => setIsScheduling(true)}
+                                className="flex-shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg"
+                            >
+                                <PlusCircleIcon className="w-6 h-6" />
+                                {t.addToPlannerButton}
+                            </button>
+                        </div>
                     </div>
                 </div>
 

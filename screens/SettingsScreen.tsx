@@ -2,42 +2,21 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTheme } from '../contexts/ThemeProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useAuth } from '../contexts/AuthProvider';
+import { useBrand } from '../contexts/BrandProvider';
+import { GlobeAltIcon, SwatchIcon, UserCircleIcon, MegaphoneIcon } from '../components/icons';
 
 const SettingsScreen: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { lang, setLang, t } = useTranslations();
   const { logout } = useAuth();
+  const { brandPersona, setBrandPersona } = useBrand();
   
-  const [isDarkMode, setIsDarkMode] = useState(() => 
-    theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const updateMode = () => {
-      const currentlyDark = theme === 'dark' || (theme === 'system' && mediaQuery.matches);
-      setIsDarkMode(currentlyDark);
-    };
-
-    updateMode(); // Initial check
-
-    mediaQuery.addEventListener('change', updateMode);
-
-    return () => mediaQuery.removeEventListener('change', updateMode);
-  }, [theme]);
-
-
-  const handleThemeToggle = () => {
-      setTheme(isDarkMode ? 'light' : 'dark');
-  };
-
-  const activeLangClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-md';
-  const inactiveLangClasses = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800';
+  const activeSegmentClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-md';
+  const inactiveSegmentClasses = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800';
 
   return (
     <div className="animate-fade-in max-w-2xl mx-auto space-y-8 p-4 sm:p-6 md:p-8">
@@ -46,79 +25,93 @@ const SettingsScreen: React.FC = () => {
         <p className="text-md text-gray-600 dark:text-gray-400 mt-1">{t.settingsSubtitle}</p>
       </div>
 
-      {/* Main Settings Card */}
-      <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl p-6 space-y-6">
-        {/* Language Setting */}
-        <div>
-            <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">{t.language}</h3>
-                <div className="flex bg-gray-200 dark:bg-gray-900 rounded-lg p-1">
+      <div className="space-y-6">
+        {/* Brand Persona Card */}
+        <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
+            <div className="p-6">
+                <h3 className="flex items-center gap-3 text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <MegaphoneIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+                    {t.brandPersona}
+                </h3>
+                 <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t.brandPersonaDescription}</p>
+                    <textarea
+                        rows={4}
+                        value={brandPersona}
+                        onChange={(e) => setBrandPersona(e.target.value)}
+                        placeholder={t.brandPersonaPlaceholder}
+                        className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition backdrop-blur-sm"
+                    />
+                 </div>
+            </div>
+        </div>
+        
+        {/* Appearance Card */}
+        <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
+            <div className="p-6">
+                <h3 className="flex items-center gap-3 text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <SwatchIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+                    {t.appearance}
+                </h3>
+                 <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                         <div>
+                            <p className="font-medium text-gray-700 dark:text-gray-300">{t.theme}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t.themeDescription}</p>
+                        </div>
+                        <div dir="ltr" className="flex-shrink-0 bg-gray-200 dark:bg-gray-900 rounded-lg p-1 flex">
+                            <button onClick={() => setTheme('light')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'light' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.light}</button>
+                            <button onClick={() => setTheme('dark')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'dark' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.dark}</button>
+                            <button onClick={() => setTheme('system')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'system' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.system}</button>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+
+        {/* Language Card */}
+         <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
+            <div className="p-6">
+                <h3 className="flex items-center gap-3 text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <GlobeAltIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+                    {t.language}
+                </h3>
+                 <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                         <div>
+                            <p className="font-medium text-gray-700 dark:text-gray-300">{t.language}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t.languageDescription}</p>
+                        </div>
+                         <div className="flex-shrink-0 bg-gray-200 dark:bg-gray-900 rounded-lg p-1 flex">
+                            <button onClick={() => setLang('ar')} className={`py-2 px-6 rounded-md transition-colors text-sm font-semibold ${lang === 'ar' ? activeSegmentClasses : inactiveSegmentClasses}`}>العربية</button>
+                            <button onClick={() => setLang('en')} className={`py-2 px-6 rounded-md transition-colors text-sm font-semibold ${lang === 'en' ? activeSegmentClasses : inactiveSegmentClasses}`}>English</button>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+
+        {/* Account Card */}
+        <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
+            <div className="p-6">
+                <h3 className="flex items-center gap-3 text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <UserCircleIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+                    {t.account}
+                </h3>
+                <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10 space-y-4">
+                    <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{t.signedInAs}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">admin.sa@gmail.com</p>
+                    </div>
                     <button
-                        onClick={() => setLang('ar')}
-                        className={`py-2 px-6 rounded-md transition-colors text-sm font-semibold ${lang === 'ar' ? activeLangClasses : inactiveLangClasses}`}
+                        onClick={logout}
+                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold py-3 px-4 rounded-lg transition-colors text-center"
                     >
-                        العربية
-                    </button>
-                    <button
-                        onClick={() => setLang('en')}
-                        className={`py-2 px-6 rounded-md transition-colors text-sm font-semibold ${lang === 'en' ? activeLangClasses : inactiveLangClasses}`}
-                    >
-                        English
+                        {t.logout}
                     </button>
                 </div>
             </div>
         </div>
-
-        {/* Theme Setting */}
-        <div>
-          <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">{t.theme}</h3>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isDarkMode}
-                onClick={handleThemeToggle}
-                className={`${isDarkMode ? 'bg-indigo-600' : 'bg-gray-400 dark:bg-gray-600'}
-                  relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900`}
-              >
-                <span className="sr-only">Use setting</span>
-                <span
-                  className={`${isDarkMode ? 'translate-x-6 rtl:-translate-x-6' : 'translate-x-0 rtl:translate-x-0'}
-                    pointer-events-none relative inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out -translate-y-px`}
-                >
-                  <span
-                    className={`${isDarkMode ? 'opacity-0 duration-100 ease-out' : 'opacity-100 duration-200 ease-in'}
-                      absolute inset-0 flex h-full w-full items-center justify-center transition-opacity`}
-                    aria-hidden="true"
-                  >
-                    <svg className="h-4 w-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 2zM10 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 15zM10 7a3 3 0 100 6 3 3 0 000-6zM3.25 10a.75.75 0 01-.75-.75h-1.5a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zM17.5 10a.75.75 0 01-.75-.75h-1.5a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zM6.168 14.832a.75.75 0 01-1.06-1.06l-1.06-1.061a.75.75 0 111.06-1.06l1.06 1.06a.75.75 0 010 1.061zM14.832 6.168a.75.75 0 01-1.06-1.06l-1.06-1.06a.75.75 0 011.06-1.06l1.06 1.06a.75.75 0 010 1.06zM13.832 13.832a.75.75 0 011.06 1.06l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM5.108 5.108a.75.75 0 011.06 1.06l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06z"></path>
-                    </svg>
-                  </span>
-                  <span
-                    className={`${isDarkMode ? 'opacity-100 duration-200 ease-in' : 'opacity-0 duration-100 ease-out'}
-                      absolute inset-0 flex h-full w-full items-center justify-center transition-opacity`}
-                    aria-hidden="true"
-                  >
-                    <svg className="h-4 w-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                    </svg>
-                  </span>
-                </span>
-              </button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Account Card */}
-      <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl p-6">
-         <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">{t.account}</h3>
-         <button
-            onClick={logout}
-            className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold py-3 px-4 rounded-lg transition-colors text-center"
-         >
-           {t.logout}
-         </button>
       </div>
     </div>
   );

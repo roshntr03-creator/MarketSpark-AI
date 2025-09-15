@@ -10,6 +10,9 @@ import { LanguageProvider } from './contexts/LanguageProvider';
 import { MarketingToolsProvider } from './contexts/MarketingToolsProvider';
 import { UsageStatsProvider } from './contexts/UsageStatsProvider';
 import { AuthProvider } from './contexts/AuthProvider';
+import { CreationHistoryProvider } from './contexts/CreationHistoryProvider';
+import { PlannerProvider } from './contexts/PlannerProvider';
+import { BrandProvider } from './contexts/BrandProvider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -19,11 +22,17 @@ root.render(
     <ThemeProvider>
       <LanguageProvider>
         <UsageStatsProvider>
-          <MarketingToolsProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </MarketingToolsProvider>
+          <CreationHistoryProvider>
+            <PlannerProvider>
+              <BrandProvider>
+                <MarketingToolsProvider>
+                  <AuthProvider>
+                    <App />
+                  </AuthProvider>
+                </MarketingToolsProvider>
+              </BrandProvider>
+            </PlannerProvider>
+          </CreationHistoryProvider>
         </UsageStatsProvider>
       </LanguageProvider>
     </ThemeProvider>

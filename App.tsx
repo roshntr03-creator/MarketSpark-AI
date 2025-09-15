@@ -10,11 +10,12 @@ import DashboardScreen from './screens/DashboardScreen';
 import ToolsScreen from './screens/ToolsScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import PlannerScreen from './screens/PlannerScreen';
 import OnboardingFlow from './components/OnboardingFlow';
 import LoginScreen from './screens/LoginScreen';
 import { useAuth } from './contexts/AuthProvider';
-
-export type Screen = 'dashboard' | 'tools' | 'analytics' | 'settings';
+// FIX: Corrected the import path for the Screen type.
+import type { Screen } from './types/index';
 
 const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<Screen>('dashboard');
@@ -33,9 +34,12 @@ const App: React.FC = () => {
       case 'dashboard':
         return <DashboardScreen setActiveScreen={setActiveScreen} />;
       case 'tools':
-        return <ToolsScreen />;
+        return <ToolsScreen setActiveScreen={setActiveScreen} />;
       case 'analytics':
-        return <AnalyticsScreen />;
+        return <AnalyticsScreen setActiveScreen={setActiveScreen} />;
+      case 'planner':
+        // FIX: Pass the setActiveScreen prop to PlannerScreen to match its required props.
+        return <PlannerScreen setActiveScreen={setActiveScreen} />;
       case 'settings':
         return <SettingsScreen />;
       default:

@@ -12,6 +12,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import ErrorScreen from '../components/ErrorScreen';
 import type { EditedImage } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
+import { useCreationHistory } from '../contexts/CreationHistoryProvider';
+import { useBrand } from '../contexts/BrandProvider';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -26,6 +28,8 @@ const ImageEditorScreen: React.FC = () => {
     const { t } = useTranslations();
     const { setImageEditResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
+    const { addCreation } = useCreationHistory();
+    const { brandPersona } = useBrand();
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -53,7 +57,7 @@ const ImageEditorScreen: React.FC = () => {
         setError(null);
         try {
             const base64Image = await fileToBase64(imageFile);
-            const result = await editImage(base64Image, imageFile.type, prompt);
+            const result = await editImage(base64Image, imageFile.type, prompt, brandPersona);
             
             const resultPayload: EditedImage = {
                 original: `data:${imageFile.type};base64,${base64Image}`,
@@ -61,7 +65,8 @@ const ImageEditorScreen: React.FC = () => {
                 prompt: prompt,
                 responseText: result.text || undefined,
             };
-            setImageEditResult(resultPayload);
+            const creation = addCreation('image-editor', resultPayload);
+            setImageEditResult({ result: resultPayload, creation });
             incrementToolUsage('image-editor');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');

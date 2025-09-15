@@ -6,7 +6,7 @@ import React from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import ToolCard from '../components/ToolCard';
-import { WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, PhotoIcon, VideoCameraIcon, SparklesIcon } from '../components/icons';
+import { WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, PhotoIcon, VideoCameraIcon, SparklesIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon } from '../components/icons';
 import CampaignGeneratorScreen from '../components/StartScreen';
 import SocialPostAssistantScreen from '../components/SocialPostAssistantScreen';
 import CampaignResultsScreen from '../components/ResultsScreen';
@@ -17,15 +17,36 @@ import ImageGeneratorScreen from './ImageGeneratorScreen';
 import ImageGeneratorResultsScreen from '../components/ImageGeneratorResultsScreen';
 import VideoGeneratorScreen from './VideoGeneratorScreen';
 import VideoGeneratorResultsScreen from '../components/VideoGeneratorResultsScreen';
-import type { Tool } from '../types/index';
+import CompetitorAnalysisScreen from './CompetitorAnalysisScreen';
+import CompetitorAnalysisResultsScreen from '../components/CompetitorAnalysisResultsScreen';
+import ContentRepurposingScreen from './ContentRepurposingScreen';
+import ContentRepurposingResultsScreen from '../components/ContentRepurposingResultsScreen';
+import ContentStrategistScreen from './ContentStrategistScreen';
+import ContentStrategyResultsScreen from '../components/ContentStrategyResultsScreen';
+import type { Tool, Screen } from '../types/index';
 
-const ToolsScreen: React.FC = () => {
+interface ToolsScreenProps {
+    setActiveScreen: (screen: Screen) => void;
+}
+
+const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
     const { t } = useTranslations();
-    const { activeTool, setActiveTool, campaignResult, socialPostsResult, imageEditResult, generatedImageResult, videoGenerationResult } = useMarketingTools();
+    const { 
+        activeTool, 
+        setActiveTool, 
+        campaignResult, 
+        socialPostsResult, 
+        imageEditResult, 
+        generatedImageResult, 
+        videoGenerationResult,
+        competitorAnalysisResult,
+        contentRepurposingResult,
+        contentStrategyResult
+    } = useMarketingTools();
 
     if (activeTool) {
         if (activeTool === 'campaign-generator') {
-            return campaignResult ? <CampaignResultsScreen /> : <CampaignGeneratorScreen />;
+            return campaignResult ? <CampaignResultsScreen setActiveScreen={setActiveScreen} /> : <CampaignGeneratorScreen />;
         }
         if (activeTool === 'social-post-assistant') {
             return socialPostsResult ? <SocialPostResultsScreen /> : <SocialPostAssistantScreen />;
@@ -39,6 +60,15 @@ const ToolsScreen: React.FC = () => {
         if (activeTool === 'video-generator') {
             return videoGenerationResult ? <VideoGeneratorResultsScreen /> : <VideoGeneratorScreen />;
         }
+        if (activeTool === 'competitor-analysis') {
+            return competitorAnalysisResult ? <CompetitorAnalysisResultsScreen /> : <CompetitorAnalysisScreen />;
+        }
+        if (activeTool === 'content-repurposing') {
+            return contentRepurposingResult ? <ContentRepurposingResultsScreen /> : <ContentRepurposingScreen />;
+        }
+        if (activeTool === 'content-strategist') {
+            return contentStrategyResult ? <ContentStrategyResultsScreen setActiveScreen={setActiveScreen} /> : <ContentStrategistScreen />;
+        }
         return (
             <div>
                 <button onClick={() => setActiveTool(null)} className="mb-4 text-blue-500 dark:text-blue-400">
@@ -51,6 +81,13 @@ const ToolsScreen: React.FC = () => {
     
     const tools: { id: Tool; title: string; description: string; Icon: React.ElementType; disabled: boolean }[] = [
         {
+            id: 'content-strategist',
+            title: t.contentStrategistTitle,
+            description: t.contentStrategistDescription,
+            Icon: LightBulbIcon,
+            disabled: false,
+        },
+        {
             id: 'campaign-generator',
             title: t.campaignGeneratorTitle,
             description: t.campaignGeneratorDescription,
@@ -62,6 +99,20 @@ const ToolsScreen: React.FC = () => {
             title: t.socialPostAssistantTitle,
             description: t.socialPostAssistantDescription,
             Icon: ChatBubbleLeftRightIcon,
+            disabled: false,
+        },
+        {
+            id: 'competitor-analysis',
+            title: t.competitorAnalysisTitle,
+            description: t.competitorAnalysisDescription,
+            Icon: MagnifyingGlassIcon,
+            disabled: false,
+        },
+        {
+            id: 'content-repurposing',
+            title: t.contentRepurposingTitle,
+            description: t.contentRepurposingDescription,
+            Icon: DocumentDuplicateIcon,
             disabled: false,
         },
         {

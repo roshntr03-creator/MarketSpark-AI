@@ -12,6 +12,8 @@ import { startVideoGeneration, checkVideoGenerationStatus } from '../services/ge
 import ErrorScreen from '../components/ErrorScreen';
 import type { GeneratedVideo } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
+import { useCreationHistory } from '../contexts/CreationHistoryProvider';
+import { useBrand } from '../contexts/BrandProvider';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -48,6 +50,8 @@ const VideoGeneratorScreen: React.FC = () => {
     const { t } = useTranslations();
     const { setVideoGenerationResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
+    const { addCreation } = useCreationHistory();
+    const { brandPersona } = useBrand();
 
     const [prompt, setPrompt] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -77,7 +81,8 @@ const VideoGeneratorScreen: React.FC = () => {
                     videoUri: operation.response.generatedVideos[0].video.uri,
                     prompt: prompt,
                 };
-                setVideoGenerationResult(resultPayload);
+                const creation = addCreation('video-generator', resultPayload);
+                setVideoGenerationResult({ result: resultPayload, creation });
                 incrementToolUsage('video-generator');
             } else {
                 setError("Video generation finished, but no video was returned. The request may have been refused.");
@@ -86,7 +91,7 @@ const VideoGeneratorScreen: React.FC = () => {
 
         return () => clearTimeout(timeoutId);
 
-    }, [isPolling, operation, prompt, setVideoGenerationResult, incrementToolUsage]);
+    }, [isPolling, operation, prompt, setVideoGenerationResult, incrementToolUsage, addCreation]);
 
     const runGenerateVideo = async () => {
         if (!prompt) {
@@ -101,7 +106,7 @@ const VideoGeneratorScreen: React.FC = () => {
                 const base64 = await fileToBase64(imageFile);
                 imagePayload = { base64, mimeType: imageFile.type };
             }
-            const initialOp = await startVideoGeneration(prompt, imagePayload);
+            const initialOp = await startVideoGeneration(prompt, imagePayload, brandPersona);
             setOperation(initialOp);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');

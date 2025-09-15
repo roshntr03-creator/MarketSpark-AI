@@ -5,10 +5,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { WrenchScrewdriverIcon } from '../components/icons';
-import type { Screen } from '../App';
+// FIX: Corrected the import path for the Screen and Tool types. They are defined in types/index.ts.
+import type { Screen, Tool } from '../types/index';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
 import { generateDailyTip } from '../services/geminiService';
-import type { Tool } from '../types';
 
 interface DashboardScreenProps {
     setActiveScreen: (screen: Screen) => void;
@@ -35,12 +35,16 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ setActiveScreen }) =>
 
         const mostUsedToolKey = mostUsedToolEntry ? mostUsedToolEntry[0] as Tool : null;
         
+        // FIX: Add missing tool definitions to satisfy the Tool type.
         const toolKeyMap: { [key in Tool]: string } = {
             'campaign-generator': t.campaignGeneratorTitle,
             'social-post-assistant': t.socialPostAssistantTitle,
             'image-editor': t.imageEditorTitle,
             'image-generator': t.imageGeneratorTitle,
             'video-generator': t.videoGeneratorTitle,
+            'competitor-analysis': t.competitorAnalysisTitle,
+            'content-repurposing': t.contentRepurposingTitle,
+            'content-strategist': t.contentStrategistTitle,
         };
         const mostUsedTool = mostUsedToolKey ? toolKeyMap[mostUsedToolKey] : 'N/A';
 
