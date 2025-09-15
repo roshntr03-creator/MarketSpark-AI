@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import { useTheme } from '../contexts/ThemeProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useAuth } from '../contexts/AuthProvider';
 import { useBrand } from '../contexts/BrandProvider';
-import { GlobeAltIcon, SwatchIcon, UserCircleIcon, MegaphoneIcon } from '../components/icons';
+import { GlobeAltIcon, UserCircleIcon, MegaphoneIcon } from '../components/icons';
 
 const SettingsScreen: React.FC = () => {
-  const { theme, setTheme } = useTheme();
   const { lang, setLang, t } = useTranslations();
   const { logout } = useAuth();
   const { brandPersona, setBrandPersona } = useBrand();
@@ -46,29 +44,6 @@ const SettingsScreen: React.FC = () => {
             </div>
         </div>
         
-        {/* Appearance Card */}
-        <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
-            <div className="p-6">
-                <h3 className="flex items-center gap-3 text-lg font-medium text-gray-900 dark:text-gray-100">
-                    <SwatchIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
-                    {t.appearance}
-                </h3>
-                 <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                         <div>
-                            <p className="font-medium text-gray-700 dark:text-gray-300">{t.theme}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{t.themeDescription}</p>
-                        </div>
-                        <div dir="ltr" className="flex-shrink-0 bg-gray-200 dark:bg-gray-900 rounded-lg p-1 flex">
-                            <button onClick={() => setTheme('light')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'light' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.light}</button>
-                            <button onClick={() => setTheme('dark')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'dark' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.dark}</button>
-                            <button onClick={() => setTheme('system')} className={`py-2 px-4 rounded-md transition-colors text-sm font-semibold ${theme === 'system' ? activeSegmentClasses : inactiveSegmentClasses}`}>{t.system}</button>
-                        </div>
-                    </div>
-                 </div>
-            </div>
-        </div>
-
         {/* Language Card */}
          <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
             <div className="p-6">

@@ -6,7 +6,7 @@ import React from 'react';
 // FIX: Corrected the import path for the Screen type. It is defined in types/index.ts, not App.tsx.
 import type { Screen } from '../types/index';
 import { useTranslations } from '../contexts/LanguageProvider';
-import { HomeIcon, WrenchScrewdriverIcon, ChartBarIcon, CogIcon, CalendarDaysIcon } from './icons';
+import { HomeIcon, ToolsIcon, ChartBarIcon, CogIcon, CalendarDaysIcon } from './icons';
 
 interface BottomNavBarProps {
     activeScreen: Screen;
@@ -28,7 +28,7 @@ const NavItem: React.FC<{
             className={`flex flex-col items-center justify-center gap-1 w-full py-2 rounded-lg transition-all duration-200 ${isActive ? activeClasses : inactiveClasses}`}
             aria-current={isActive ? 'page' : undefined}
         >
-            <Icon className="w-7 h-7" />
+            <Icon className="w-6 h-6" />
             <span className="text-xs font-medium">{label}</span>
         </button>
     )
@@ -40,7 +40,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeScreen, setActiveScre
 
     const navItems: { screen: Screen; label: string; Icon: React.ElementType; }[] = [
         { screen: 'dashboard', label: t.navDashboard, Icon: HomeIcon },
-        { screen: 'tools', label: t.navTools, Icon: WrenchScrewdriverIcon },
+        { screen: 'tools', label: t.navTools, Icon: ToolsIcon },
         { screen: 'planner', label: t.navPlanner, Icon: CalendarDaysIcon },
         { screen: 'analytics', label: t.navAnalytics, Icon: ChartBarIcon },
         { screen: 'settings', label: t.navSettings, Icon: CogIcon },

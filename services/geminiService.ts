@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { Campaign, SocialPost, EditedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit } from '../types/index';
+// FIX: Added 'GeneratedImage' to the type imports to resolve a type error.
+import type { Campaign, SocialPost, EditedImage, GeneratedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool } from '../types/index';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
@@ -385,4 +386,94 @@ export const generateAssetKit = async (description: string, keywords: string, la
     });
     const jsonText = response.text.trim();
     return JSON.parse(jsonText) as AssetKit;
+};
+
+export const generateMarketingTip = async (lang: 'en' | 'ar'): Promise<string> => {
+    const model = 'gemini-2.5-flash';
+    const prompt = `Generate a short, actionable marketing tip of the day. The tip should be relevant to modern digital marketing (social media, content marketing, SEO, etc.). Keep it concise and to the point.
+    IMPORTANT: The entire response must be a single paragraph and in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+    });
+
+    return response.text;
+};
+
+
+export const generateMarketingTipForTool = async (tool: Tool, lang: 'en' | 'ar'): Promise<string> => {
+    const model = 'gemini-2.5-flash';
+    const prompt = `Generate a short, actionable marketing tip of the day specifically related to the following marketing tool or concept: "${tool.replace(/-/g, ' ')}". Keep it concise and to the point.
+    IMPORTANT: The entire response must be a single paragraph and in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+    });
+
+    return response.text;
+};
+
+const dashboardSuggestionsSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            title: { type: Type.STRING },
+            tool: { type: Type.STRING, enum: ['campaign-generator', 'social-post-assistant', 'image-editor', 'image-generator', 'video-generator', 'competitor-analysis', 'content-repurposing', 'content-strategist', 'asset-kit-generator', 'workflow'] },
+            promptData: { type: Type.STRING },
+        },
+    }
+}
+
+export const generateDashboardSuggestions = async (lastCreation: CreationHistoryItem, lang: 'en' | 'ar'): Promise<DashboardSuggestion[]> => {
+    const model = 'gemini-2.5-flash';
+    let creationDetails = '';
+
+    // Create a detailed description of the last creation
+    switch (lastCreation.tool) {
+        case 'campaign-generator':
+            const camp = lastCreation.result as Campaign;
+            creationDetails = `They just created a marketing campaign for a product called "${camp.campaign.productName}" with the tagline "${camp.campaign.tagline}".`;
+            break;
+        case 'social-post-assistant':
+            const posts = lastCreation.result as SocialPost[];
+            creationDetails = `They just generated social media posts, including this one: "${posts[0].content}".`;
+            break;
+        case 'image-generator':
+            const img = lastCreation.result as GeneratedImage;
+            creationDetails = `They just generated an image with the prompt: "${img.prompt}".`;
+            break;
+        default:
+            creationDetails = `Their last action was using the "${lastCreation.tool.replace(/-/g, ' ')}" tool.`;
+    }
+
+    const prompt = `A user in a marketing AI app just performed an action. Based on this, suggest 2-3 logical next steps to continue their workflow.
+    Their last action: ${creationDetails}
+
+    For each suggestion, provide a short, actionable title, the corresponding tool ID to use, and a "promptData" string that the next tool can use.
+    - If suggesting 'social-post-assistant', the promptData should be a good topic for the posts.
+    - If suggesting 'image-generator', the promptData should be a good prompt for the image.
+    - If suggesting other tools, make the title descriptive (e.g., "Analyze a competitor").
+
+    Example response format:
+    [
+      { "title": "Create social posts for [Product Name]", "tool": "social-post-assistant", "promptData": "Posts about the launch of [Product Name]" },
+      { "title": "Generate an image for the campaign", "tool": "image-generator", "promptData": "An image for [Product Name] with tagline '[Tagline]'" }
+    ]
+
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: dashboardSuggestionsSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as DashboardSuggestion[];
 };

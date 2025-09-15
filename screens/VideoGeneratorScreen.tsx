@@ -60,7 +60,8 @@ const VideoGeneratorScreen: React.FC = () => {
     const [operation, setOperation] = useState<any | null>(null);
     
     useEffect(() => {
-        let timeoutId: NodeJS.Timeout;
+        // FIX: Replaced NodeJS.Timeout with a browser-compatible type for setTimeout's return value.
+        let timeoutId: ReturnType<typeof setTimeout>;
 
         const poll = async (op: any) => {
             try {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useMemo } from 'react';
-import type { Screen, PlannerItem, CreationResult } from '../types/index';
+import type { Screen, PlannerItem, CreationResult, Campaign, CampaignDetails } from '../types/index';
 import { usePlanner } from '../contexts/PlannerProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
@@ -21,8 +21,15 @@ const PlannerCard: React.FC<{ item: PlannerItem; creation: CreationResult | unde
     
     if (item.creationId && creation) {
         if ('campaign' in creation) {
-            title = creation.campaign.productName + ' Campaign';
-            description = creation.campaign.tagline;
+            // FIX: Correctly access nested properties of the Campaign object.
+            // The 'creation' object can be a Campaign or a WorkflowResult.
+            // A WorkflowResult has a 'campaign' property which is a Campaign object,
+            // so we need to go one level deeper to get the CampaignDetails.
+            const campaignDetails: CampaignDetails = 'productName' in creation.campaign
+                ? (creation.campaign as CampaignDetails)
+                : (creation.campaign as Campaign).campaign;
+            title = campaignDetails.productName + ' Campaign';
+            description = campaignDetails.tagline;
             toolName = t.campaignGenerator;
         } else if (Array.isArray(creation) && 'platform' in creation[0]) {
             title = `${creation[0].platform} Posts`;

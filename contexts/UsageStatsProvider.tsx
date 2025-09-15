@@ -9,6 +9,7 @@ import type { Tool, UsageLogEntry, RecentActivity } from '../types/index';
 type RawStats = { [key in Tool]?: number };
 
 interface UsageStatsContextType {
+  log: UsageLogEntry[];
   rawStats: RawStats;
   recentActivity: RecentActivity[];
   incrementToolUsage: (tool: Tool, count?: number) => void;
@@ -86,6 +87,7 @@ export const UsageStatsProvider: React.FC<{ children: ReactNode }> = ({ children
   
 
   const value = { 
+    log,
     rawStats,
     recentActivity,
     incrementToolUsage,

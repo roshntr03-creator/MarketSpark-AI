@@ -6,7 +6,7 @@ import React from 'react';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
 import ToolCard from '../components/ToolCard';
-import { SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon, SwatchIcon } from '../components/icons';
+import { SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon, SwatchIcon, WorkflowIcon } from '../components/icons';
 import type { Tool, Screen } from '../types/index';
 
 // Tool-specific screen components
@@ -28,6 +28,8 @@ import ContentStrategistScreen from './ContentStrategistScreen';
 import ContentStrategyResultsScreen from '../components/ContentStrategyResultsScreen';
 import AssetKitGeneratorScreen from './AssetKitGeneratorScreen';
 import AssetKitResultsScreen from '../components/AssetKitResultsScreen';
+import WorkflowsScreen from './WorkflowsScreen';
+import WorkflowResultsScreen from '../components/WorkflowResultsScreen';
 
 
 interface ToolsScreenProps {
@@ -39,10 +41,11 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
     const { 
         activeTool, setActiveTool, 
         campaignResult, socialPostsResult, imageEditResult, generatedImageResult, videoGenerationResult,
-        competitorAnalysisResult, contentRepurposingResult, contentStrategyResult, assetKitResult
+        competitorAnalysisResult, contentRepurposingResult, contentStrategyResult, assetKitResult, workflowResult
     } = useMarketingTools();
 
     const tools: { id: Tool; title: string; description: string; Icon: React.ElementType; disabled?: boolean }[] = [
+        { id: 'workflow', title: t.workflow, description: t.workflowDesc, Icon: WorkflowIcon },
         { id: 'campaign-generator', title: t.campaignGenerator, description: t.campaignGeneratorDesc, Icon: SparklesIcon },
         { id: 'social-post-assistant', title: t.socialPostAssistant, description: t.socialPostAssistantDesc, Icon: ChatBubbleLeftRightIcon },
         { id: 'image-generator', title: t.imageGenerator, description: t.imageGeneratorDesc, Icon: PhotoIcon },
@@ -74,6 +77,8 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
                 return contentStrategyResult ? <ContentStrategyResultsScreen setActiveScreen={setActiveScreen} /> : <ContentStrategistScreen />;
             case 'asset-kit-generator':
                 return assetKitResult ? <AssetKitResultsScreen /> : <AssetKitGeneratorScreen />;
+            case 'workflow':
+                return workflowResult ? <WorkflowResultsScreen setActiveScreen={setActiveScreen} /> : <WorkflowsScreen />;
             default:
                 return null;
         }

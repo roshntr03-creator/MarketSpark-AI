@@ -14,7 +14,8 @@ export type Tool =
   | 'competitor-analysis'
   | 'content-repurposing'
   | 'content-strategist'
-  | 'asset-kit-generator';
+  | 'asset-kit-generator'
+  | 'workflow';
 
 export interface Source {
   uri: string;
@@ -61,6 +62,10 @@ export interface EditedImage {
 export interface GeneratedImage {
     image: string; // base64 data URL
     prompt: string;
+}
+
+export interface GeneratedImageWithPost extends GeneratedImage {
+  forPostContent: string;
 }
 
 export interface GeneratedVideo {
@@ -120,7 +125,19 @@ export interface AssetKit {
     imageStyles: string[];
 }
 
-export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit;
+export interface WorkflowResult {
+  campaign: Campaign;
+  socialPosts: SocialPost[];
+  images: GeneratedImageWithPost[];
+}
+
+export interface DashboardSuggestion {
+  title: string;
+  tool: Tool;
+  promptData?: string;
+}
+
+export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | WorkflowResult;
 
 export interface CreationHistoryItem {
   id: string;

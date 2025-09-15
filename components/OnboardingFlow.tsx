@@ -4,7 +4,7 @@
 */
 import React, { useState } from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
-import { SparklesIcon, WrenchScrewdriverIcon, ChartBarIcon } from './icons';
+import { SparklesIcon, ToolsIcon, ChartBarIcon } from './icons';
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -21,7 +21,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
       description: t.onboardingWelcomeDesc,
     },
     {
-      Icon: WrenchScrewdriverIcon,
+      Icon: ToolsIcon,
       title: t.onboardingToolsTitle,
       description: t.onboardingToolsDesc,
     },
