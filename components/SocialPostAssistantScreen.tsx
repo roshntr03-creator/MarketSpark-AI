@@ -18,7 +18,7 @@ const platforms = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'TikTok'];
 const tones = ['Professional', 'Casual', 'Humorous', 'Informative', 'Excited'];
 
 const SocialPostAssistantScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setSocialPostsResult, setActiveTool, initialSocialPostTopic, setInitialSocialPostTopic } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -45,7 +45,7 @@ const SocialPostAssistantScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const posts = await generateSocialPosts(topic, platform, tone, brandPersona);
+            const posts = await generateSocialPosts(topic, platform, tone, brandPersona, lang);
             const creation = addCreation('social-post-assistant', posts);
             setSocialPostsResult({ result: posts, creation });
             incrementToolUsage('social-post-assistant', posts.length);

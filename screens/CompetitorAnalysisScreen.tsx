@@ -13,7 +13,7 @@ import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 
 const CompetitorAnalysisScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setCompetitorAnalysisResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -30,7 +30,7 @@ const CompetitorAnalysisScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await analyzeCompetitor(url);
+            const result = await analyzeCompetitor(url, lang);
             const creation = addCreation('competitor-analysis', result);
             setCompetitorAnalysisResult({ result, creation });
             incrementToolUsage('competitor-analysis');

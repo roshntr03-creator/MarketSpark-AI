@@ -2,372 +2,288 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import type { Campaign, SocialPost, EditedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit } from '../types/index';
 
-import { GoogleGenAI, Modality, Type } from '@google/genai';
-import type { Campaign, CampaignDetails, SocialPost, Source, CompetitorAnalysisResult, RepurposedContent, ContentStrategy } from '../types/index';
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-
-export async function generateDailyTip(language: string): Promise<string> {
-    const model = 'gemini-2.5-flash';
-    const prompt = `Generate a short, insightful marketing tip of the day. The tip should be concise and practical. Language: ${language}.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-        });
-        return response.text;
-    } catch (error) {
-        console.error('Error generating daily tip:', error);
-        throw new Error('Failed to generate daily tip. Please try again.');
-    }
-}
-
-export async function generateCampaign(product: {
-    name: string;
-    description: string;
-    targetAudience?: string;
-}, brandPersona?: string): Promise<Campaign> {
-    const model = 'gemini-2.5-flash';
-    const personaInstruction = brandPersona ? `\nAdhere strictly to this brand persona: "${brandPersona}"` : '';
-    const prompt = `
-        Generate a comprehensive marketing campaign for the following product.
-        Product Name: ${product.name}
-        Description: ${product.description}
-        ${product.targetAudience ? `Target Audience Hint: ${product.targetAudience}` : ''}
-        ${personaInstruction}
-
-        Use Google Search to find recent, relevant marketing trends to inform the campaign strategy, especially for channel suggestions.
-        
-        Return your response as a single JSON object with the following structure:
-        {
-          "productName": "string",
-          "tagline": "string",
-          "keyMessages": ["string"],
-          "targetAudience": {
-            "description": "string",
-            "demographics": ["string"]
-          },
-          "channels": [
-            {
-              "name": "string",
-              "contentIdea": "string"
-            }
-          ]
-        }
-        Do not include any text outside of this JSON object.
-    `;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                tools: [{ googleSearch: {} }],
+const campaignSchema = {
+    type: Type.OBJECT,
+    properties: {
+        campaign: {
+            type: Type.OBJECT,
+            required: ["productName", "tagline", "keyMessages", "targetAudience", "channels"],
+            properties: {
+                productName: { type: Type.STRING },
+                tagline: { type: Type.STRING, description: "A catchy tagline for the product." },
+                keyMessages: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 key marketing messages." },
+                targetAudience: {
+                    type: Type.OBJECT,
+                    required: ["description", "demographics"],
+                    properties: {
+                        description: { type: Type.STRING, description: "A paragraph describing the target audience." },
+                        demographics: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of key demographic points." },
+                    },
+                },
+                channels: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        required: ["name", "contentIdea"],
+                        properties: {
+                            name: { type: Type.STRING, description: "e.g., Instagram, Blog, TikTok" },
+                            contentIdea: { type: Type.STRING, description: "A specific content idea for this channel." },
+                        },
+                    },
+                },
             },
-        });
-        
-        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-        const sources: Source[] = groundingChunks.map((chunk: any) => ({
-            uri: chunk.web.uri,
-            title: chunk.web.title,
-        })).filter((source: Source) => source.uri && source.title);
-        
-        const textResponse = response.text.trim().replace(/^```json\s*/, '').replace(/```$/, '');
-        const campaignDetails = JSON.parse(textResponse) as CampaignDetails;
+        },
+        sources: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    uri: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                },
+            },
+        },
+    },
+};
 
-        return { campaign: campaignDetails, sources: sources };
-    } catch (error) {
-        console.error('Error generating campaign:', error);
-        throw new Error('Failed to generate campaign. Please check the response format or try again.');
-    }
-}
+export const generateCampaign = async (product: { name: string; description: string; targetAudience: string }, brandPersona: string, lang: 'en' | 'ar'): Promise<Campaign> => {
+    const model = 'gemini-2.5-flash';
+    const prompt = `Generate a comprehensive marketing campaign for the following product.
+    Product Name: ${product.name}
+    Product Description: ${product.description}
+    Target Audience: ${product.targetAudience}
+    ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
+    Ground the campaign in real-world marketing principles. Use Google Search to find recent, relevant information. Provide sources for any statistics or substantial claims.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
 
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: campaignSchema,
+            tools: [{ googleSearch: {} }],
+        }
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as Campaign;
+};
 
 const socialPostSchema = {
     type: Type.ARRAY,
     items: {
         type: Type.OBJECT,
+        required: ["platform", "content", "hashtags", "predictedEngagement"],
         properties: {
             platform: { type: Type.STRING },
-            content: { type: Type.STRING },
-            hashtags: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-            },
-            predictedEngagement: {
-                type: Type.STRING,
-                description: "Predicted engagement level: 'High', 'Medium', or 'Low'.",
-            },
-        },
-        required: ['platform', 'content', 'hashtags', 'predictedEngagement'],
-    },
+            content: { type: Type.STRING, description: "The full text content of the social media post." },
+            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            predictedEngagement: { type: Type.STRING, enum: ["High", "Medium", "Low"] }
+        }
+    }
 };
 
-export async function generateSocialPosts(topic: string, platform: string, tone: string, brandPersona?: string): Promise<SocialPost[]> {
+
+export const generateSocialPosts = async (topic: string, platform: string, tone: string, brandPersona: string, lang: 'en' | 'ar'): Promise<SocialPost[]> => {
     const model = 'gemini-2.5-flash';
-    const personaInstruction = brandPersona ? `\n- Adhere to this brand persona: "${brandPersona}"` : '';
-    const prompt = `
-        Generate 3 social media posts about "${topic}".
-        - Target Platform: ${platform}
-        - Tone: ${tone}${personaInstruction}
-        - Each post should include relevant hashtags and a predicted engagement level ('High', 'Medium', or 'Low').
-        - Ensure the content is engaging and tailored to the specified platform.
-        - Return the output as a JSON array of objects, following the provided schema.
-    `;
+    const prompt = `Generate 3 social media posts for ${platform} about "${topic}".
+    The tone should be ${tone}.
+    ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
+    For each post, provide the content, a list of relevant hashtags, and predict the engagement level (High, Medium, or Low).
+    Ensure the posts are tailored to the conventions of the ${platform} platform.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: socialPostSchema,
+        }
+    });
 
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: socialPostSchema,
-            },
-        });
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as SocialPost[];
+};
 
-        return JSON.parse(response.text) as SocialPost[];
-    } catch (error) {
-        console.error('Error generating social posts:', error);
-        throw new Error('Failed to generate social posts. Please try again.');
-    }
-}
 
-export async function editImage(base64Image: string, mimeType: string, prompt: string, brandPersona?: string): Promise<{ editedImageBase64: string, text: string | null }> {
+export const editImage = async (base64ImageData: string, mimeType: string, prompt: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ editedImageBase64: string, text: string | null }> => {
     const model = 'gemini-2.5-flash-image-preview';
-    const personaInstruction = brandPersona ? `\n(Keep in mind the brand persona: "${brandPersona}")` : '';
-    const finalPrompt = `${prompt} ${personaInstruction}`;
+    const fullPrompt = `${prompt}. ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
+    IMPORTANT: If you generate any accompanying text, it must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: {
+            parts: [
+                { inlineData: { data: base64ImageData, mimeType } },
+                { text: fullPrompt },
+            ],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
 
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: {
-                parts: [
-                    {
-                        inlineData: {
-                            data: base64Image,
-                            mimeType: mimeType,
-                        },
-                    },
-                    {
-                        text: finalPrompt,
-                    },
-                ],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
-        });
+    let editedImageBase64: string | null = null;
+    let text: string | null = null;
 
-        let editedImageBase64: string | undefined;
-        let text: string | null = null;
-        
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                editedImageBase64 = part.inlineData.data;
-            } else if (part.text) {
-                text = (text || '') + part.text;
-            }
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            editedImageBase64 = part.inlineData.data;
+        } else if (part.text) {
+            text = part.text;
         }
-        
-        if (!editedImageBase64) {
-            throw new Error(text ?? "The AI did not return an edited image. It may have refused the request.");
-        }
-        
-        return { editedImageBase64, text };
-
-    } catch (error) {
-        console.error('Error editing image:', error);
-        if (error instanceof Error) {
-           throw new Error(`Failed to edit image: ${error.message}`);
-        }
-        throw new Error('An unknown error occurred while editing the image.');
     }
-}
 
-export async function generateImage(prompt: string, brandPersona?: string): Promise<{ imageBase64: string }> {
+    if (!editedImageBase64) {
+        throw new Error("API did not return an edited image.");
+    }
+    
+    return { editedImageBase64, text };
+};
+
+
+export const generateImage = async (prompt: string, brandPersona: string): Promise<{ imageBase64: string }> => {
     const model = 'imagen-4.0-generate-001';
+    const fullPrompt = `${prompt}. ${brandPersona ? `\nStyle hint: ${brandPersona}`: ''}`;
+
+    const response = await ai.models.generateImages({
+        model,
+        prompt: fullPrompt,
+        config: {
+            numberOfImages: 1,
+            outputMimeType: 'image/png',
+        },
+    });
     
-    const personaInstruction = brandPersona ? `in a style that is ${brandPersona}, ` : '';
-    const finalPrompt = `A high-quality, photorealistic image, ${personaInstruction}of: ${prompt}`;
-
-    try {
-        const response = await ai.models.generateImages({
-            model: model,
-            prompt: finalPrompt,
-            config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/png',
-              aspectRatio: '1:1',
-            },
-        });
-
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            const imageBase64 = response.generatedImages[0].image.imageBytes;
-            return { imageBase64 };
-        } else {
-            throw new Error("The AI did not return an image. It may have refused the request.");
-        }
-
-    } catch (error) {
-        console.error('Error generating image:', error);
-        if (error instanceof Error) {
-           throw new Error(`Failed to generate image: ${error.message}`);
-        }
-        throw new Error('An unknown error occurred while generating the image.');
+    const imageBase64 = response.generatedImages[0].image.imageBytes;
+    if (!imageBase64) {
+        throw new Error("API did not return an image.");
     }
-}
 
-export async function startVideoGeneration(prompt: string, image?: { base64: string, mimeType: string }, brandPersona?: string): Promise<any> {
+    return { imageBase64 };
+};
+
+export const startVideoGeneration = async (prompt: string, image: { base64: string, mimeType: string } | undefined, brandPersona: string) => {
     const model = 'veo-2.0-generate-001';
+    const fullPrompt = `${prompt}. ${brandPersona ? `\nStyle hint: ${brandPersona}`: ''}`;
     
-    const imagePart = image ? {
-        imageBytes: image.base64,
-        mimeType: image.mimeType,
-    } : undefined;
-
-    const personaInstruction = brandPersona ? ` (style: ${brandPersona})` : '';
-    const finalPrompt = `${prompt}${personaInstruction}`;
-
-    try {
-        const operation = await ai.models.generateVideos({
-            model: model,
-            prompt: finalPrompt,
-            image: imagePart,
-            config: {
-                numberOfVideos: 1
-            }
+    let operation;
+    if (image) {
+        operation = await ai.models.generateVideos({
+            model,
+            prompt: fullPrompt,
+            image: { imageBytes: image.base64, mimeType: image.mimeType },
+            config: { numberOfVideos: 1 }
         });
-        return operation;
-    } catch (error) {
-        console.error('Error starting video generation:', error);
-        throw new Error('Failed to start video generation.');
-    }
-}
-
-export async function checkVideoGenerationStatus(operation: any): Promise<any> {
-    try {
-        const updatedOperation = await ai.operations.getVideosOperation({ operation: operation });
-        return updatedOperation;
-    } catch (error) {
-        console.error('Error checking video generation status:', error);
-        throw new Error('Failed to check video generation status.');
-    }
-}
-
-export async function analyzeCompetitor(url: string): Promise<CompetitorAnalysisResult> {
-    const model = 'gemini-2.5-flash';
-    const prompt = `
-        Analyze the marketing strategy of the brand at this URL: ${url}.
-        Use Google Search to find information about their website, and social media presence.
-        Provide a concise analysis.
-
-        Return your response as a single JSON object with the following structure:
-        {
-          "competitorName": "string",
-          "analysisSummary": "string (A brief, one-paragraph summary of their overall strategy)",
-          "toneOfVoice": "string (Describe their brand voice, e.g., 'Professional and authoritative')",
-          "keyMarketingMessages": ["string"],
-          "contentStrengths": ["string"],
-          "contentWeaknesses": ["string"],
-          "differentiationOpportunities": ["string (3 actionable ways our brand can stand out)"]
-        }
-        Do not include any text outside of this JSON object.
-    `;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                tools: [{ googleSearch: {} }],
-            },
+    } else {
+        operation = await ai.models.generateVideos({
+            model,
+            prompt: fullPrompt,
+            config: { numberOfVideos: 1 }
         });
-        
-        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-        const sources: Source[] = groundingChunks.map((chunk: any) => ({
-            uri: chunk.web.uri,
-            title: chunk.web.title,
-        })).filter((source: Source) => source.uri && source.title);
-        
-        const textResponse = response.text.trim().replace(/^```json\s*/, '').replace(/```$/, '');
-        const analysisDetails = JSON.parse(textResponse);
-
-        return { ...analysisDetails, sources };
-    } catch (error) {
-        console.error('Error analyzing competitor:', error);
-        throw new Error('Failed to analyze competitor. Please check the response format or try again.');
     }
-}
+    return operation;
+};
 
-const repurposedContentSchema = {
+export const checkVideoGenerationStatus = async (operation: any) => {
+    return await ai.operations.getVideosOperation({ operation });
+};
+
+
+const competitorAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
-        twitterThread: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "A thread of 3-5 tweets."
-        },
-        instagramCarousel: {
+        competitorName: { type: Type.STRING },
+        analysisSummary: { type: Type.STRING },
+        toneOfVoice: { type: Type.STRING },
+        keyMarketingMessages: { type: Type.ARRAY, items: { type: Type.STRING } },
+        contentStrengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+        contentWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+        differentiationOpportunities: { type: Type.ARRAY, items: { type: Type.STRING } },
+        sources: {
             type: Type.ARRAY,
             items: {
                 type: Type.OBJECT,
-                properties: {
-                    imageIdea: { type: Type.STRING, description: "A description of a visual for one slide." },
-                    caption: { type: Type.STRING, description: "The caption for that slide." }
-                },
-                required: ['imageIdea', 'caption'],
+                properties: { uri: { type: Type.STRING }, title: { type: Type.STRING } },
             },
-            description: "Ideas for 3-5 Instagram carousel slides."
         },
-        linkedInPost: {
-            type: Type.STRING,
-            description: "A professional post for LinkedIn."
-        },
-        videoReelScript: {
-            type: Type.STRING,
-            description: "A short, engaging script for a TikTok/Instagram Reel, including visual cues."
-        },
-    },
-    required: ['twitterThread', 'instagramCarousel', 'linkedInPost', 'videoReelScript'],
+    }
 };
 
-
-export async function repurposeContent(content: string, brandPersona?: string): Promise<RepurposedContent> {
+export const analyzeCompetitor = async (url: string, lang: 'en' | 'ar'): Promise<CompetitorAnalysis> => {
     const model = 'gemini-2.5-flash';
-    const personaInstruction = brandPersona ? `\n- Adhere to this brand persona: "${brandPersona}"` : '';
-    const prompt = `
-        Take the following content and repurpose it for multiple social media platforms.
-        
-        Original Content: "${content}"
-        
-        - Create a thread for Twitter.
-        - Create ideas for an Instagram Carousel.
-        - Create a professional post for LinkedIn.
-        - Create a script for a short video (Reel/TikTok).
-        ${personaInstruction}
-        - Return the output as a JSON object, following the provided schema.
-    `;
+    const prompt = `Analyze the marketing strategy of the company at this URL: ${url}. 
+    Provide a detailed analysis covering their tone of voice, key marketing messages, content strengths and weaknesses, and potential differentiation opportunities for a competitor.
+    Use Google Search to gather information about the company and its marketing. Provide sources.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: repurposedContentSchema,
-            },
-        });
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: competitorAnalysisSchema,
+            tools: [{ googleSearch: {} }],
+        }
+    });
 
-        return JSON.parse(response.text) as RepurposedContent;
-    } catch (error) {
-        console.error('Error repurposing content:', error);
-        throw new Error('Failed to repurpose content. Please try again.');
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as CompetitorAnalysis;
+};
+
+const repurposingSchema = {
+    type: Type.OBJECT,
+    properties: {
+        twitterThread: { type: Type.ARRAY, items: { type: Type.STRING } },
+        instagramCarousel: { 
+            type: Type.ARRAY, 
+            items: { 
+                type: Type.OBJECT, 
+                properties: { 
+                    imageIdea: { type: Type.STRING }, 
+                    caption: { type: Type.STRING } 
+                } 
+            } 
+        },
+        linkedInPost: { type: Type.STRING },
+        videoReelScript: { type: Type.STRING },
     }
-}
+};
 
-const contentStrategySchema = {
+export const repurposeContent = async (content: string, brandPersona: string, lang: 'en' | 'ar'): Promise<ContentRepurposingResult> => {
+    const model = 'gemini-2.5-flash';
+    const prompt = `Repurpose the following content into different formats.
+    Original Content: "${content}"
+    ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
+    Generate:
+    1. A Twitter thread (3-5 tweets).
+    2. An Instagram carousel (3 slides with image ideas and captions).
+    3. A professional LinkedIn post.
+    4. A short video reel script (30-60 seconds).
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: repurposingSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as ContentRepurposingResult;
+};
+
+const strategySchema = {
     type: Type.OBJECT,
     properties: {
         strategyName: { type: Type.STRING },
@@ -377,54 +293,96 @@ const contentStrategySchema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    day: { type: Type.NUMBER },
+                    day: { type: Type.INTEGER },
+                    title: { type: Type.STRING },
                     platform: { type: Type.STRING },
                     format: { type: Type.STRING },
-                    title: { type: Type.STRING },
                     contentIdea: { type: Type.STRING },
                     suggestedTime: { type: Type.STRING },
-                },
-                required: ['day', 'platform', 'format', 'title', 'contentIdea', 'suggestedTime'],
-            },
-        },
-    },
-    required: ['strategyName', 'overallGoal', 'contentPlan'],
+                }
+            }
+        }
+    }
 };
 
-
-export async function generateContentStrategy(
-    { goal, duration, audience, keywords }: { goal: string; duration: string; audience?: string; keywords?: string; },
-    brandPersona?: string
-): Promise<ContentStrategy> {
+export const generateContentStrategy = async (details: { goal: string; duration: string; audience: string; keywords: string; }, brandPersona: string, lang: 'en' | 'ar'): Promise<ContentStrategy> => {
     const model = 'gemini-2.5-flash';
-    const personaInstruction = brandPersona ? `\n- The strategy must strictly adhere to this brand persona: "${brandPersona}"` : '';
-    const prompt = `
-        Create a detailed content marketing strategy based on the following inputs.
-        
-        - Main Goal: ${goal}
-        - Duration: ${duration}
-        ${audience ? `- Target Audience: ${audience}` : ''}
-        ${keywords ? `- Key SEO Keywords: ${keywords}` : ''}
-        ${personaInstruction}
-        
-        Generate a day-by-day content plan. The plan should include a variety of content formats (Post, Story, Video, Article) and suggest platforms (e.g., Instagram, Twitter, Blog, LinkedIn, TikTok). Each content idea should be actionable and directly support the main goal.
-        
-        Return the output as a JSON object, following the provided schema. Ensure 'day' is a number representing the day in the plan (e.g., 1, 3, 7).
-    `;
+    const prompt = `Create a content strategy with the following details:
+    Marketing Goal: ${details.goal}
+    Duration: ${details.duration}
+    Target Audience: ${details.audience || 'General Audience'}
+    Keywords: ${details.keywords || 'Not specified'}
+    ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
+    Provide a strategy name, restate the overall goal, and create a day-by-day content plan with a title, platform, format, content idea, and suggested posting time for each piece of content.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: contentStrategySchema,
-            },
-        });
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: strategySchema,
+        }
+    });
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as ContentStrategy;
+};
 
-        return JSON.parse(response.text) as ContentStrategy;
-    } catch (error) {
-        console.error('Error generating content strategy:', error);
-        throw new Error('Failed to generate content strategy. Please try again.');
+const assetKitSchema = {
+    type: Type.OBJECT,
+    properties: {
+        logoStyles: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    style: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                }
+            }
+        },
+        colorPalette: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    hex: { type: Type.STRING },
+                    name: { type: Type.STRING },
+                }
+            }
+        },
+        fontPairings: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    headline: { type: Type.STRING },
+                    body: { type: Type.STRING },
+                }
+            }
+        },
+        imageStyles: { type: Type.ARRAY, items: { type: Type.STRING } },
     }
-}
+};
+
+export const generateAssetKit = async (description: string, keywords: string, lang: 'en' | 'ar'): Promise<AssetKit> => {
+    const model = 'gemini-2.5-flash';
+    const prompt = `Generate a brand asset kit based on this description: "${description}" and these keywords: "${keywords}".
+    Provide suggestions for:
+    - 2-3 Logo styles with descriptions.
+    - A color palette with 5-6 colors (hex codes and names).
+    - 2 font pairings (headline and body fonts).
+    - A description of recommended image styles.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}. All descriptions, names, and styles must be in this language.`;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: assetKitSchema,
+        }
+    });
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as AssetKit;
+};

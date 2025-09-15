@@ -15,7 +15,7 @@ import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
 
 const CampaignGeneratorScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setCampaignResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -35,7 +35,7 @@ const CampaignGeneratorScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const campaign = await generateCampaign({ name: productName, description: productDescription, targetAudience }, brandPersona);
+            const campaign = await generateCampaign({ name: productName, description: productDescription, targetAudience }, brandPersona, lang);
             const creation = addCreation('campaign-generator', campaign);
             setCampaignResult({ result: campaign, creation });
             incrementToolUsage('campaign-generator');

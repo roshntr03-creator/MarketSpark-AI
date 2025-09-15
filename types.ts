@@ -2,8 +2,18 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-// FIX: Added 'image-generator' to the Tool type to support the image generator tool.
-export type Tool = 'campaign-generator' | 'social-post-assistant' | 'image-editor' | 'image-generator' | 'video-generator';
+// FIX: Added 'image-generator' and all other marketing tools to the Tool type to support the full suite of features.
+export type Tool =
+  | 'campaign-generator'
+  | 'social-post-assistant'
+  | 'image-editor'
+  | 'image-generator'
+  | 'video-generator'
+  | 'competitor-analysis'
+  | 'content-repurposing'
+  | 'content-strategist'
+  | 'asset-kit-generator';
+
 
 export interface Source {
   uri: string;

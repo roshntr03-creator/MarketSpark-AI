@@ -2,19 +2,19 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-export type Screen = 'dashboard' | 'tools' | 'analytics' | 'settings' | 'planner';
 
-export type Tool = 'campaign-generator' | 'social-post-assistant' | 'image-editor' | 'image-generator' | 'video-generator' | 'competitor-analysis' | 'content-repurposing' | 'content-strategist';
+export type Screen = 'dashboard' | 'tools' | 'analytics' | 'planner' | 'settings';
 
-export interface UsageLogEntry {
-  tool: Tool;
-  timestamp: number; // UTC milliseconds
-}
-
-export interface RecentActivity {
-    date: Date;
-    value: number;
-}
+export type Tool =
+  | 'campaign-generator'
+  | 'social-post-assistant'
+  | 'image-editor'
+  | 'image-generator'
+  | 'video-generator'
+  | 'competitor-analysis'
+  | 'content-repurposing'
+  | 'content-strategist'
+  | 'asset-kit-generator';
 
 export interface Source {
   uri: string;
@@ -40,8 +40,8 @@ export interface CampaignDetails {
 }
 
 export interface Campaign {
-    campaign: CampaignDetails;
-    sources: Source[];
+  campaign: CampaignDetails;
+  sources: Source[];
 }
 
 export interface SocialPost {
@@ -52,23 +52,23 @@ export interface SocialPost {
 }
 
 export interface EditedImage {
-  original: string; // base64
-  edited: string; // base64
+  original: string; // base64 data URL
+  edited: string; // base64 data URL
   prompt: string;
   responseText?: string;
 }
 
 export interface GeneratedImage {
-  image: string; // base64 data URL
-  prompt: string;
+    image: string; // base64 data URL
+    prompt: string;
 }
 
 export interface GeneratedVideo {
-  videoUri: string; // The URI to fetch the video from
-  prompt: string;
+    videoUri: string;
+    prompt: string;
 }
 
-export interface CompetitorAnalysisResult {
+export interface CompetitorAnalysis {
     competitorName: string;
     analysisSummary: string;
     toneOfVoice: string;
@@ -79,48 +79,73 @@ export interface CompetitorAnalysisResult {
     sources: Source[];
 }
 
-export interface RepurposedContent {
+export interface ContentRepurposingResult {
     twitterThread: string[];
-    instagramCarousel: {
-        imageIdea: string;
-        caption: string;
-    }[];
+    instagramCarousel: { imageIdea: string; caption: string }[];
     linkedInPost: string;
     videoReelScript: string;
 }
 
 export interface ContentPlanItem {
-  day: number;
-  platform: string;
-  format: 'Post' | 'Story' | 'Video' | 'Article';
-  title: string;
-  contentIdea: string;
-  suggestedTime: string;
+    day: number;
+    title: string;
+    platform: string;
+    format: string;
+    contentIdea: string;
+    suggestedTime: string;
 }
 
 export interface ContentStrategy {
-  strategyName: string;
-  overallGoal: string;
-  contentPlan: ContentPlanItem[];
+    strategyName: string;
+    overallGoal: string;
+    contentPlan: ContentPlanItem[];
 }
 
+export interface ColorPalette {
+    hex: string;
+    name: string;
+}
+export interface LogoStyle {
+    style: string;
+    description: string;
+}
 
-export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysisResult | RepurposedContent | ContentStrategy;
+export interface AssetKit {
+    logoStyles: LogoStyle[];
+    colorPalette: ColorPalette[];
+    fontPairings: {
+        headline: string;
+        body: string;
+    }[];
+    imageStyles: string[];
+}
+
+export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit;
 
 export interface CreationHistoryItem {
-  id: string; // timestamp as string
+  id: string;
   tool: Tool;
   timestamp: number;
   result: CreationResult;
 }
 
 export interface PlannerItem {
-    id: string; // unique id
-    scheduledDateTime: string; // ISO string
-    creationId?: string; // id from CreationHistoryItem
-    // New fields for planned ideas from the strategist
+    id: string;
+    creationId?: string; // For linking back to a full creation
+    scheduledDateTime: string;
+    // For content strategy items that are not full creations yet
     title?: string;
     platform?: string;
     contentIdea?: string;
-    format?: 'Post' | 'Story' | 'Video' | 'Article';
+    format?: string;
+}
+
+export interface UsageLogEntry {
+    tool: Tool;
+    timestamp: number;
+}
+
+export interface RecentActivity {
+    date: Date;
+    value: number;
 }

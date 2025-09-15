@@ -16,7 +16,7 @@ import { useBrand } from '../contexts/BrandProvider';
 const durations = ['1 Week', '2 Weeks', '1 Month'];
 
 const ContentStrategistScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setContentStrategyResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -37,7 +37,7 @@ const ContentStrategistScreen: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await generateContentStrategy({ goal, duration, audience, keywords }, brandPersona);
+            const result = await generateContentStrategy({ goal, duration, audience, keywords }, brandPersona, lang);
             const creation = addCreation('content-strategist', result);
             setContentStrategyResult({ result, creation });
             incrementToolUsage('content-strategist');

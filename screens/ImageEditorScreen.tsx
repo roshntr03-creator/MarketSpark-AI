@@ -25,7 +25,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const ImageEditorScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setImageEditResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -57,7 +57,7 @@ const ImageEditorScreen: React.FC = () => {
         setError(null);
         try {
             const base64Image = await fileToBase64(imageFile);
-            const result = await editImage(base64Image, imageFile.type, prompt, brandPersona);
+            const result = await editImage(base64Image, imageFile.type, prompt, brandPersona, lang);
             
             const resultPayload: EditedImage = {
                 original: `data:${imageFile.type};base64,${base64Image}`,

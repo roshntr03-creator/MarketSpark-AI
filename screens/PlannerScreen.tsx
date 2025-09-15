@@ -2,187 +2,111 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useMemo } from 'react';
-import { useTranslations } from '../contexts/LanguageProvider';
+import React, { useMemo } from 'react';
+import type { Screen, PlannerItem, CreationResult } from '../types/index';
 import { usePlanner } from '../contexts/PlannerProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
-import { useMarketingTools } from '../contexts/MarketingToolsProvider';
-import type { PlannerItem, CreationHistoryItem, Tool, Screen } from '../types/index';
-// FIX: Import missing icons.
-import { ArrowLeftIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, PhotoIcon, SparklesIcon, VideoCameraIcon, CalendarDaysIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon } from '../components/icons';
+import { useTranslations } from '../contexts/LanguageProvider';
 
 interface PlannerScreenProps {
-    setActiveScreen: (screen: Screen) => void;
+  setActiveScreen: (screen: Screen) => void;
+}
+
+const PlannerCard: React.FC<{ item: PlannerItem; creation: CreationResult | undefined }> = ({ item, creation }) => {
+    const { t } = useTranslations();
+    
+    let title = item.title || 'Scheduled Item';
+    let description = item.contentIdea || 'No details available.';
+    let toolName = 'Unknown';
+    
+    if (item.creationId && creation) {
+        if ('campaign' in creation) {
+            title = creation.campaign.productName + ' Campaign';
+            description = creation.campaign.tagline;
+            toolName = t.campaignGenerator;
+        } else if (Array.isArray(creation) && 'platform' in creation[0]) {
+            title = `${creation[0].platform} Posts`;
+            description = creation[0].content.substring(0, 100) + '...';
+            toolName = t.socialPostAssistant;
+        } else if ('edited' in creation) {
+            title = 'Edited Image';
+            description = `Prompt: ${creation.prompt}`;
+            toolName = t.imageEditor;
+        } else if ('image' in creation) {
+            title = 'Generated Image';
+            description = `Prompt: ${creation.prompt}`;
+            toolName = t.imageGenerator;
+        } else if ('videoUri' in creation) {
+            title = 'Generated Video';
+            description = `Prompt: ${creation.prompt}`;
+            toolName = t.videoGenerator;
+        }
+    } else {
+        toolName = t.contentStrategist;
+    }
+
+    return (
+        <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl p-4 ml-4 border-l-4 border-indigo-400">
+            <p className="font-bold text-gray-900 dark:text-gray-100">{title}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+            <div className="mt-2 text-xs">
+                <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200 font-medium px-2 py-1 rounded-full">{toolName}</span>
+                {item.platform && <span className="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium px-2 py-1 rounded-full">{item.platform}</span>}
+            </div>
+        </div>
+    );
 }
 
 const PlannerScreen: React.FC<PlannerScreenProps> = ({ setActiveScreen }) => {
-    const { t, lang } = useTranslations();
+    const { t } = useTranslations();
     const { plannerItems } = usePlanner();
     const { getCreationById } = useCreationHistory();
-    const { setActiveTool, setInitialSocialPostTopic, setInitialImageGeneratorPrompt } = useMarketingTools();
-    const [currentDate, setCurrentDate] = useState(new Date());
 
-    const { month, year, daysInMonth, firstDayOfMonth } = useMemo(() => {
-        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        return {
-            month: date.getMonth(),
-            year: date.getFullYear(),
-            daysInMonth: new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
-            firstDayOfMonth: date.getDay(),
-        };
-    }, [currentDate]);
-
-    const monthName = useMemo(() => 
-        new Intl.DateTimeFormat(lang, { month: 'long', year: 'numeric' }).format(currentDate),
-    [currentDate, lang]);
-
-    const weekdays = useMemo(() => {
-        const formatter = new Intl.DateTimeFormat(lang, { weekday: 'short' });
-        return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2023, 0, i + 1)));
-    }, [lang]);
-
-    const changeMonth = (delta: number) => {
-        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
-    };
-
-    const scheduledItemsByDay = useMemo(() => {
-        const map = new Map<number, PlannerItem[]>();
-        plannerItems.forEach(item => {
-            const itemDate = new Date(item.scheduledDateTime);
-            if (itemDate.getFullYear() === year && itemDate.getMonth() === month) {
-                const day = itemDate.getDate();
-                if (!map.has(day)) map.set(day, []);
-                map.get(day)?.push(item);
+    const groupedItems = useMemo(() => {
+        return plannerItems.reduce((acc, item) => {
+            const date = new Date(item.scheduledDateTime).toLocaleDateString(undefined, {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            if (!acc[date]) {
+                acc[date] = [];
             }
-        });
-        return map;
-    }, [plannerItems, year, month]);
-
-    const toolIcons: { [key in Tool]: React.ElementType } = {
-        'campaign-generator': WrenchScrewdriverIcon,
-        'social-post-assistant': ChatBubbleLeftRightIcon,
-        'image-editor': PhotoIcon,
-        'image-generator': SparklesIcon,
-        'video-generator': VideoCameraIcon,
-        'competitor-analysis': MagnifyingGlassIcon,
-        'content-repurposing': DocumentDuplicateIcon,
-        'content-strategist': LightBulbIcon,
-    };
-    
-    const toolColors: { [key in Tool]: string } = {
-        'campaign-generator': 'bg-indigo-500',
-        'social-post-assistant': 'bg-purple-500',
-        'image-editor': 'bg-pink-500',
-        'image-generator': 'bg-orange-500',
-        'video-generator': 'bg-teal-500',
-        'competitor-analysis': 'bg-sky-500',
-        'content-repurposing': 'bg-violet-500',
-        'content-strategist': 'bg-amber-500',
-    };
-
-    const handleGenerateFromIdea = (item: PlannerItem) => {
-        if (!item.contentIdea) return;
-        
-        let tool: Tool | null = null;
-        switch(item.format) {
-            case 'Post':
-            case 'Story':
-                tool = 'social-post-assistant';
-                setInitialSocialPostTopic(item.contentIdea);
-                break;
-            case 'Video':
-                tool = 'video-generator';
-                // You might need a way to set initial prompt for video too
-                break;
-            case 'Article': // Let's map Article to an image for now
-            default:
-                tool = 'image-generator';
-                setInitialImageGeneratorPrompt(item.contentIdea);
-                break;
-        }
-
-        if (tool) {
-            setActiveTool(tool);
-            setActiveScreen('tools');
-        }
-    };
-
-    const today = new Date();
-    const isToday = (day: number) => 
-        today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+            acc[date].push(item);
+            return acc;
+        }, {} as Record<string, PlannerItem[]>);
+    }, [plannerItems]);
 
     return (
-        <div className="animate-fade-in p-4 sm:p-6 md:p-8 h-full flex flex-col">
-            <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t.plannerTitle}</h1>
-                <p className="text-md text-gray-600 dark:text-gray-400 mt-1">{t.plannerSubtitle}</p>
-            </div>
-
-            <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl p-4 flex-grow flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                    <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
-                        <ArrowLeftIcon className={`w-6 h-6 ${lang === 'ar' ? 'transform rotate-180' : ''}`} />
-                    </button>
-                    <h2 className="text-xl font-bold">{monthName}</h2>
-                    <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
-                         <ArrowLeftIcon className={`w-6 h-6 ${lang === 'ar' ? '' : 'transform rotate-180'}`} />
-                    </button>
+        <div className="animate-fade-in p-4 sm:p-6 md:p-8">
+            <div className="max-w-4xl mx-auto">
+                <div className="text-center">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t.plannerScreenTitle}</h1>
+                    <p className="text-md text-gray-600 dark:text-gray-400 mt-1">{t.plannerScreenSubtitle}</p>
                 </div>
-
-                {plannerItems.length === 0 ? (
-                     <div className="flex-grow flex flex-col items-center justify-center text-center p-4">
-                        <CalendarDaysIcon className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-300">{t.plannerEmptyState}</h3>
-                        <p className="text-gray-500 dark:text-gray-400">{t.plannerEmptyStateDesc}</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-gray-600 dark:text-gray-400">
-                            {weekdays.map(day => <div key={day} className="py-2">{day}</div>)}
+                
+                <div className="mt-8 space-y-8">
+                    {Object.keys(groupedItems).length > 0 ? Object.keys(groupedItems).map(date => (
+                        <div key={date}>
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3">{date}</h2>
+                            <div className="space-y-4">
+                                {groupedItems[date].map(item => {
+                                    const creation = item.creationId ? getCreationById(item.creationId)?.result : undefined;
+                                    return <PlannerCard key={item.id} item={item} creation={creation} />
+                                })}
+                            </div>
                         </div>
-                        
-                        <div className="grid grid-cols-7 grid-rows-5 gap-1 flex-grow">
-                            {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                                <div key={`empty-${i}`} className="border-t border-gray-200/80 dark:border-white/10"></div>
-                            ))}
-                            {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                                const day = dayIndex + 1;
-                                const items = scheduledItemsByDay.get(day) || [];
-                                return (
-                                    <div key={day} className={`border-t border-gray-200/80 dark:border-white/10 p-2 relative ${isToday(day) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
-                                        <span className={`font-medium ${isToday(day) ? 'text-indigo-600 dark:text-indigo-300 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>{day}</span>
-                                        <div className="mt-1 space-y-1">
-                                            {items.map((item) => {
-                                                const creation = item.creationId ? getCreationById(item.creationId) : null;
-                                                const time = new Date(item.scheduledDateTime).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', hour12: false});
-                                                
-                                                if (creation) {
-                                                    const Icon = toolIcons[creation.tool];
-                                                    return (
-                                                        <div key={item.id} className={`${toolColors[creation.tool]} text-white text-xs rounded-md px-2 py-1 flex items-center gap-1.5`}>
-                                                            <Icon className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">{time}</span>
-                                                        </div>
-                                                    );
-                                                } else { // It's a planned idea
-                                                    return (
-                                                        <div key={item.id} className="group relative border-2 border-dashed border-gray-400/70 dark:border-gray-500/70 rounded-md p-1.5 text-xs text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-500/10" onClick={() => handleGenerateFromIdea(item)}>
-                                                            <p className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{t.plannerIdea}</p>
-                                                            <p className="text-gray-500 dark:text-gray-400 truncate">{item.title}</p>
-                                                            <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex-col items-center justify-center hidden group-hover:flex">
-                                                                <span className="font-bold text-indigo-500">{t.generateButton} &rarr;</span>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                }
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                    )) : (
+                        <div className="text-center py-16 bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl">
+                            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Your planner is empty.</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mt-2">Create content with our tools and schedule it here.</p>
+                            <button
+                                onClick={() => setActiveScreen('tools')}
+                                className="mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg"
+                            >
+                                Go to Tools
+                            </button>
                         </div>
-                    </>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
