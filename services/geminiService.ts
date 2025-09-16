@@ -8,72 +8,51 @@ import type { Campaign, SocialPost, EditedImage, GeneratedImage, CompetitorAnaly
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-const campaignSchema = {
-    type: Type.OBJECT,
-    properties: {
-        campaign: {
-            type: Type.OBJECT,
-            required: ["productName", "tagline", "keyMessages", "targetAudience", "channels"],
-            properties: {
-                productName: { type: Type.STRING },
-                tagline: { type: Type.STRING, description: "A catchy tagline for the product." },
-                keyMessages: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 key marketing messages." },
-                targetAudience: {
-                    type: Type.OBJECT,
-                    required: ["description", "demographics"],
-                    properties: {
-                        description: { type: Type.STRING, description: "A paragraph describing the target audience." },
-                        demographics: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of key demographic points." },
-                    },
-                },
-                channels: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        required: ["name", "contentIdea"],
-                        properties: {
-                            name: { type: Type.STRING, description: "e.g., Instagram, Blog, TikTok" },
-                            contentIdea: { type: Type.STRING, description: "A specific content idea for this channel." },
-                        },
-                    },
-                },
-            },
-        },
-        sources: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    uri: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                },
-            },
-        },
-    },
-};
-
 export const generateCampaign = async (product: { name: string; description: string; targetAudience: string }, brandPersona: string, lang: 'en' | 'ar'): Promise<Campaign> => {
     const model = 'gemini-2.5-flash';
+    const jsonStructure = `{
+        "productName": "string",
+        "tagline": "string",
+        "keyMessages": ["string"],
+        "targetAudience": {
+            "description": "string",
+            "demographics": ["string"]
+        },
+        "channels": [
+            { "name": "string", "contentIdea": "string" }
+        ]
+    }`;
+
     const prompt = `Generate a comprehensive marketing campaign for the following product.
     Product Name: ${product.name}
     Product Description: ${product.description}
     Target Audience: ${product.targetAudience}
     ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
-    Ground the campaign in real-world marketing principles. Use Google Search to find recent, relevant information. Provide sources for any statistics or substantial claims.
-    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    Ground the campaign in real-world marketing principles. Use Google Search to find recent, relevant information.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.
+    Your response MUST be a single, valid JSON object that conforms to the following structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
+    JSON Structure:
+    ${jsonStructure}
+    `;
 
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
         config: {
-            responseMimeType: 'application/json',
-            responseSchema: campaignSchema,
             tools: [{ googleSearch: {} }],
         }
     });
 
     const jsonText = response.text.trim();
-    return JSON.parse(jsonText) as Campaign;
+    const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    const campaignDetails = JSON.parse(cleanedJsonText);
+    
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.map((chunk: any) => chunk.web)
+        .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
+        .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
+
+    return { campaign: campaignDetails, sources: sources };
 };
 
 const socialPostSchema = {
@@ -198,46 +177,45 @@ export const checkVideoGenerationStatus = async (operation: any) => {
     return await ai.operations.getVideosOperation({ operation });
 };
 
-
-const competitorAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        competitorName: { type: Type.STRING },
-        analysisSummary: { type: Type.STRING },
-        toneOfVoice: { type: Type.STRING },
-        keyMarketingMessages: { type: Type.ARRAY, items: { type: Type.STRING } },
-        contentStrengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-        contentWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
-        differentiationOpportunities: { type: Type.ARRAY, items: { type: Type.STRING } },
-        sources: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: { uri: { type: Type.STRING }, title: { type: Type.STRING } },
-            },
-        },
-    }
-};
-
 export const analyzeCompetitor = async (url: string, lang: 'en' | 'ar'): Promise<CompetitorAnalysis> => {
     const model = 'gemini-2.5-flash';
+    const jsonStructure = `{
+        "competitorName": "string",
+        "analysisSummary": "string",
+        "toneOfVoice": "string",
+        "keyMarketingMessages": ["string"],
+        "contentStrengths": ["string"],
+        "contentWeaknesses": ["string"],
+        "differentiationOpportunities": ["string"]
+    }`;
+
     const prompt = `Analyze the marketing strategy of the company at this URL: ${url}. 
     Provide a detailed analysis covering their tone of voice, key marketing messages, content strengths and weaknesses, and potential differentiation opportunities for a competitor.
-    Use Google Search to gather information about the company and its marketing. Provide sources.
-    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+    Use Google Search to gather information about the company and its marketing.
+    IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.
+    Your response MUST be a single, valid JSON object that conforms to the following structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
+    JSON Structure:
+    ${jsonStructure}
+    `;
 
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
         config: {
-            responseMimeType: 'application/json',
-            responseSchema: competitorAnalysisSchema,
             tools: [{ googleSearch: {} }],
         }
     });
 
     const jsonText = response.text.trim();
-    return JSON.parse(jsonText) as CompetitorAnalysis;
+    const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    const analysisDetails = JSON.parse(cleanedJsonText);
+
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.map((chunk: any) => chunk.web)
+        .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
+        .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
+
+    return { ...analysisDetails, sources: sources };
 };
 
 const repurposingSchema = {
