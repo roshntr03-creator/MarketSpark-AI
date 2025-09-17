@@ -194,7 +194,11 @@ export const editImage = async (base64ImageData: string, mimeType: string, promp
 export const generateImage = async (prompt: string, brandPersona: string): Promise<{ imageBase64: string }> => {
     const ai = checkApi();
     const model = 'imagen-4.0-generate-001';
-    const fullPrompt = `${prompt}. ${brandPersona ? `\nStyle hint: ${brandPersona}`: ''}`;
+    // A more structured prompt to clearly separate the user's core request from stylistic hints.
+    // This helps the model better understand the intent, especially with mixed languages.
+    const fullPrompt = `A high-quality, photorealistic image.
+Description: "${prompt}"
+${brandPersona ? `Style Hint: ${brandPersona}`: ''}`;
 
     const response = await ai.models.generateImages({
         model,

@@ -1,7 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
-*/
 import React, { useState } from 'react';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
@@ -55,19 +51,19 @@ const ImageEditorResultsScreen: React.FC = () => {
                     <div className="space-y-3">
                         <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-300">{t.editedImage}</h2>
                         <img src={edited} alt="Edited" className="rounded-lg w-full object-contain" />
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <button 
+                        <div className="flex flex-col-reverse sm:flex-row gap-3">
+                            <button
+                                onClick={() => setIsScheduling(true)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-900 text-indigo-800 dark:text-indigo-200 font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+                            >
+                                <PlusCircleIcon className="w-6 h-6" />
+                                <span>{t.addToPlannerButton}</span>
+                            </button>
+                             <button 
                                 onClick={handleDownload}
                                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 text-lg"
                             >
                                 {t.downloadImage}
-                            </button>
-                            <button
-                                onClick={() => setIsScheduling(true)}
-                                className="flex-shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg"
-                            >
-                                <PlusCircleIcon className="w-6 h-6" />
-                                {t.addToPlannerButton}
                             </button>
                         </div>
                     </div>
