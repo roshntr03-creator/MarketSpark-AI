@@ -20,6 +20,23 @@ import { SparklesIcon } from './components/icons';
 import type { Screen } from './types/index';
 
 const ConfigurationErrorScreen: React.FC = () => {
+  const debugInfo = {
+    typeofProcess: typeof process,
+    processEnvDefined: 'unknown',
+    apiKeyExists: 'unknown',
+    allEnvKeys: 'N/A',
+  };
+
+  try {
+    debugInfo.processEnvDefined = String(typeof process.env !== 'undefined');
+    if (typeof process.env !== 'undefined') {
+      debugInfo.apiKeyExists = String(!!process.env.API_KEY);
+      debugInfo.allEnvKeys = Object.keys(process.env).join(', ') || 'None';
+    }
+  } catch (e) {
+    // process might not be defined, which is a useful data point.
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-transparent text-gray-900 dark:text-gray-100 font-sans justify-center items-center p-4 text-center">
       <div className="w-full max-w-lg mx-auto bg-red-500/10 border border-red-500/20 p-8 rounded-lg">
@@ -31,6 +48,21 @@ const ConfigurationErrorScreen: React.FC = () => {
         <p className="text-sm text-gray-500 mt-4">
           Please ensure the <code>API_KEY</code> environment variable is set in your deployment environment. The application cannot function without it.
         </p>
+        <div className="text-xs text-left text-gray-600 dark:text-gray-400 mt-6 bg-gray-100 dark:bg-gray-800/50 p-4 rounded-md border border-gray-300 dark:border-gray-600">
+          <h3 className="font-bold mb-2">Debugging Information:</h3>
+          <p>
+            - <code>typeof process</code>: <strong>{debugInfo.typeofProcess}</strong>
+          </p>
+          <p>
+            - <code>process.env</code> is defined: <strong>{debugInfo.processEnvDefined}</strong>
+          </p>
+          <p>
+            - <code>process.env.API_KEY</code> has value: <strong>{debugInfo.apiKeyExists}</strong>
+          </p>
+          <p className="break-all">
+            - Available <code>process.env</code> keys: <strong>{debugInfo.allEnvKeys}</strong>
+          </p>
+        </div>
       </div>
     </div>
   );
