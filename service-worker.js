@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-const CACHE_NAME = 'marketspark-ai-cache-v1';
+const CACHE_NAME = 'marketing-ai-cache-v1';
 // This list should be updated with all the core files needed for the app shell to work
 const urlsToCache = [
   '/',
