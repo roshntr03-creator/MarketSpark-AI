@@ -26,31 +26,28 @@ const ConfigurationErrorScreen: React.FC = () => {
         <SparklesIcon className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-red-300">خطأ في الإعدادات</h1>
         <p className="text-md text-red-400 mt-2">
-          التطبيق غير مهيأ بشكل صحيح. مفتاح Gemini API مفقود.
+          عذرًا، يبدو أن التطبيق غير مُعد بشكل صحيح. إذا كنت مستخدمًا عاديًا، يرجى التواصل مع مالك الموقع.
         </p>
 
-        <div className="text-sm text-right text-gray-300 mt-6 bg-blue-900/30 border border-blue-500/40 p-4 rounded-md">
-          <h3 className="font-bold mb-2 text-white">الحل:</h3>
-          <p className="mb-2">
-            يبدو أنك تشغل هذا التطبيق مباشرة في المتصفح. لتوفير مفتاح API الخاص بك بأمان، يرجى اتباع الخطوات التالية:
+        <div className="text-sm text-right text-gray-300 mt-6 bg-blue-900/30 border border-blue-500/40 p-4 rounded-md space-y-4">
+          <h2 className="font-bold text-lg text-white">لمالك الموقع / المطور:</h2>
+          <p>
+            مفتاح Gemini API غير موجود. لتشغيل التطبيق، يجب إعداده بشكل صحيح.
           </p>
-          <ol className="list-decimal list-inside space-y-2">
-            <li>
-              افتح أدوات المطور في متصفحك (اضغط <strong>F12</strong> أو <strong>Ctrl+Shift+I</strong>).
-            </li>
-            <li>
-              انتقل إلى تبويب <strong>"Console"</strong>.
-            </li>
-            <li>
-              انسخ الأمر التالي، استبدل <code>'YOUR_KEY_HERE'</code> بمفتاحك الفعلي، ثم اضغط على Enter.
-            </li>
-          </ol>
-          <pre className="mt-3 bg-gray-900/80 p-3 rounded-md text-cyan-300 text-xs text-left break-all">
-            <code>localStorage.setItem('GEMINI_API_KEY', 'YOUR_KEY_HERE')</code>
-          </pre>
-          <p className="mt-3">
-            بعد تنفيذ الأمر، قم <strong>بتحديث الصفحة (F5)</strong>. سيتم حفظ المفتاح بأمان في متصفحك.
-          </p>
+          <div>
+            <h3 className="font-semibold text-cyan-400">للنشر (Production):</h3>
+            <p className="text-sm">
+              الطريقة الأكثر أمانًا والموصى بها هي تعيين <code className="bg-gray-700 p-1 rounded">API_KEY</code> كمتغير بيئة (environment variable) في بيئة الاستضافة الخاصة بك. سيكتشفه التطبيق ويستخدمه تلقائيًا.
+            </p>
+          </div>
+           <div>
+            <h3 className="font-semibold text-cyan-400">للتطوير المحلي (Local Development):</h3>
+            <p className="text-sm">
+              للاختبار على جهازك المحلي، يمكنك تعيين المفتاح مؤقتًا في متصفحك. افتح وحدة تحكم المطور (F12) وقم بتشغيل الأمر التالي:
+            </p>
+            <code className="block bg-gray-900 p-2 rounded mt-2 text-white text-xs text-left" dir="ltr">localStorage.setItem('GEMINI_API_KEY', 'PASTE_YOUR_API_KEY_HERE');</code>
+            <p className="text-sm mt-1">بعد ذلك، قم بتحديث الصفحة.</p>
+          </div>
         </div>
       </div>
     </div>
