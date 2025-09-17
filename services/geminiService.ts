@@ -6,9 +6,38 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 // FIX: Added 'GeneratedImage' to the type imports to resolve a type error.
 import type { Campaign, SocialPost, EditedImage, GeneratedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool } from '../types/index';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+let ai: GoogleGenAI | null = null;
+
+// Gracefully handle initialization. If the API key is not present, `ai` will be null,
+// preventing a crash on module load. The app can then check the configuration status.
+try {
+  if (process.env.API_KEY) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  } else {
+    console.warn("API_KEY environment variable not found. Gemini API will not be available.");
+  }
+} catch (e) {
+  console.error("Failed to initialize GoogleGenAI:", e);
+}
+
+/**
+ * Checks if the Gemini API client was successfully configured.
+ * @returns {boolean} True if the API key was provided and the client is initialized.
+ */
+export const isApiConfigured = (): boolean => {
+  return !!ai;
+};
+
+// Internal function to check for the AI client before every API call.
+const checkApi = () => {
+    if (!ai) {
+        throw new Error("Gemini API is not configured. Please ensure the API_KEY environment variable is set.");
+    }
+    return ai;
+}
 
 export const generateCampaign = async (product: { name: string; description: string; targetAudience: string }, brandPersona: string, lang: 'en' | 'ar'): Promise<Campaign> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const jsonStructure = `{
         "productName": "string",
@@ -71,6 +100,7 @@ const socialPostSchema = {
 
 
 export const generateSocialPosts = async (topic: string, platform: string, tone: string, brandPersona: string, lang: 'en' | 'ar'): Promise<SocialPost[]> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Generate 3 social media posts for ${platform} about "${topic}".
     The tone should be ${tone}.
@@ -94,6 +124,7 @@ export const generateSocialPosts = async (topic: string, platform: string, tone:
 
 
 export const editImage = async (base64ImageData: string, mimeType: string, prompt: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ editedImageBase64: string, text: string | null }> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash-image-preview';
     const fullPrompt = `${prompt}. ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
     IMPORTANT: If you generate any accompanying text, it must be in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
@@ -131,6 +162,7 @@ export const editImage = async (base64ImageData: string, mimeType: string, promp
 
 
 export const generateImage = async (prompt: string, brandPersona: string): Promise<{ imageBase64: string }> => {
+    const ai = checkApi();
     const model = 'imagen-4.0-generate-001';
     const fullPrompt = `${prompt}. ${brandPersona ? `\nStyle hint: ${brandPersona}`: ''}`;
 
@@ -152,6 +184,7 @@ export const generateImage = async (prompt: string, brandPersona: string): Promi
 };
 
 export const startVideoGeneration = async (prompt: string, image: { base64: string, mimeType: string } | undefined, brandPersona: string) => {
+    const ai = checkApi();
     const model = 'veo-2.0-generate-001';
     const fullPrompt = `${prompt}. ${brandPersona ? `\nStyle hint: ${brandPersona}`: ''}`;
     
@@ -174,10 +207,12 @@ export const startVideoGeneration = async (prompt: string, image: { base64: stri
 };
 
 export const checkVideoGenerationStatus = async (operation: any) => {
+    const ai = checkApi();
     return await ai.operations.getVideosOperation({ operation });
 };
 
 export const analyzeCompetitor = async (url: string, lang: 'en' | 'ar'): Promise<CompetitorAnalysis> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const jsonStructure = `{
         "competitorName": "string",
@@ -238,6 +273,7 @@ const repurposingSchema = {
 };
 
 export const repurposeContent = async (content: string, brandPersona: string, lang: 'en' | 'ar'): Promise<ContentRepurposingResult> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Repurpose the following content into different formats.
     Original Content: "${content}"
@@ -285,6 +321,7 @@ const strategySchema = {
 };
 
 export const generateContentStrategy = async (details: { goal: string; duration: string; audience: string; keywords: string; }, brandPersona: string, lang: 'en' | 'ar'): Promise<ContentStrategy> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Create a content strategy with the following details:
     Marketing Goal: ${details.goal}
@@ -345,6 +382,7 @@ const assetKitSchema = {
 };
 
 export const generateAssetKit = async (description: string, keywords: string, lang: 'en' | 'ar'): Promise<AssetKit> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Generate a brand asset kit based on this description: "${description}" and these keywords: "${keywords}".
     Provide suggestions for:
@@ -367,6 +405,7 @@ export const generateAssetKit = async (description: string, keywords: string, la
 };
 
 export const generateMarketingTip = async (lang: 'en' | 'ar'): Promise<string> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Generate a short, actionable marketing tip of the day. The tip should be relevant to modern digital marketing (social media, content marketing, SEO, etc.). Keep it concise and to the point.
     IMPORTANT: The entire response must be a single paragraph and in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
@@ -381,6 +420,7 @@ export const generateMarketingTip = async (lang: 'en' | 'ar'): Promise<string> =
 
 
 export const generateMarketingTipForTool = async (tool: Tool, lang: 'en' | 'ar'): Promise<string> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     const prompt = `Generate a short, actionable marketing tip of the day specifically related to the following marketing tool or concept: "${tool.replace(/-/g, ' ')}". Keep it concise and to the point.
     IMPORTANT: The entire response must be a single paragraph and in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
@@ -406,6 +446,7 @@ const dashboardSuggestionsSchema = {
 }
 
 export const generateDashboardSuggestions = async (lastCreation: CreationHistoryItem, lang: 'en' | 'ar'): Promise<DashboardSuggestion[]> => {
+    const ai = checkApi();
     const model = 'gemini-2.5-flash';
     let creationDetails = '';
 

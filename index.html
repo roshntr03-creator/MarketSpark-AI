@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0L61.2 38.8L100 50L61.2 61.2L50 100L38.8 61.2L0 50L38.8 38.8L50 0Z' fill='%236366f1'/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MarketSpark AI</title>
     
@@ -10,20 +10,13 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- Mobile-app like experience -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#030712">
     
     <script>
-      // This script must run before the main tailwind script and before the body renders.
-      
-      // 1. Configures Tailwind CSS to use class-based dark mode.
-      // This must be defined before the main Tailwind script is loaded.
-      tailwind.config = {
-        darkMode: 'class',
-      };
-
-      // 2. Apply the saved theme or system preference immediately to prevent FOUC.
+      // Apply the saved theme or system preference immediately to prevent FOUC.
       if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
       } else {
@@ -31,6 +24,13 @@
       }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // This must run AFTER the main Tailwind script is loaded.
+      // Configures Tailwind CSS to use class-based dark mode.
+      tailwind.config = {
+        darkMode: 'class',
+      };
+    </script>
 
   <script type="importmap">
 {
