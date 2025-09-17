@@ -8,13 +8,25 @@ import type { Campaign, SocialPost, EditedImage, GeneratedImage, CompetitorAnaly
 
 let ai: GoogleGenAI | null = null;
 
-// Gracefully handle initialization. If the API key is not present, `ai` will be null,
-// preventing a crash on module load. The app can then check the configuration status.
+// Gracefully handle initialization.
+// The app can then check the configuration status.
 try {
-  if (process.env.API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  let apiKey: string | undefined | null = undefined;
+
+  // First, try the standard environment variable method.
+  // This might be undefined in some environments, so we check for `process` first.
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    apiKey = process.env.API_KEY;
+  } 
+  // If that fails, try to get it from localStorage for browser-based setups.
+  else if (typeof window !== 'undefined' && window.localStorage) {
+    apiKey = localStorage.getItem('GEMINI_API_KEY');
+  }
+
+  if (apiKey) {
+    ai = new GoogleGenAI({ apiKey });
   } else {
-    console.warn("API_KEY environment variable not found. Gemini API will not be available.");
+    console.warn("Gemini API key not found in process.env or localStorage. API will not be available.");
   }
 } catch (e) {
   console.error("Failed to initialize GoogleGenAI:", e);
@@ -31,7 +43,7 @@ export const isApiConfigured = (): boolean => {
 // Internal function to check for the AI client before every API call.
 const checkApi = () => {
     if (!ai) {
-        throw new Error("Gemini API is not configured. Please ensure the API_KEY environment variable is set.");
+        throw new Error("Gemini API is not configured. Please ensure the API_KEY environment variable is set or provided via localStorage.");
     }
     return ai;
 }
@@ -59,7 +71,7 @@ export const generateCampaign = async (product: { name: string; description: str
     ${brandPersona ? `\nAdhere to the following brand persona: ${brandPersona}`: ''}
     Ground the campaign in real-world marketing principles. Use Google Search to find recent, relevant information.
     IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.
-    Your response MUST be a single, valid JSON object that conforms to the following structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
+    Your response MUST be a single, valid JSON object that conforms to a specific structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
     JSON Structure:
     ${jsonStructure}
     `;
@@ -72,16 +84,34 @@ export const generateCampaign = async (product: { name: string; description: str
         }
     });
 
-    const jsonText = response.text.trim();
-    const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    const campaignDetails = JSON.parse(cleanedJsonText);
+    // The response text from a googleSearch tool is not guaranteed to be JSON.
+    // We need to find the JSON block within the text.
+    let jsonText = response.text.trim();
+    const jsonMatch = jsonText.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+        jsonText = jsonMatch[1];
+    } else {
+        // Fallback for when the model doesn't use markdown
+        const startIndex = jsonText.indexOf('{');
+        const endIndex = jsonText.lastIndexOf('}');
+        if (startIndex !== -1 && endIndex !== -1) {
+            jsonText = jsonText.substring(startIndex, endIndex + 1);
+        }
+    }
     
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
-        ?.map((chunk: any) => chunk.web)
-        .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
-        .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
+    try {
+        const campaignDetails = JSON.parse(jsonText);
+        
+        const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+            ?.map((chunk: any) => chunk.web)
+            .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
+            .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
 
-    return { campaign: campaignDetails, sources: sources };
+        return { campaign: campaignDetails, sources: sources };
+    } catch (e) {
+        console.error("Failed to parse JSON from Gemini response:", jsonText);
+        throw new Error("The AI returned an invalid data structure for the campaign. Please try again.");
+    }
 };
 
 const socialPostSchema = {
@@ -228,7 +258,7 @@ export const analyzeCompetitor = async (url: string, lang: 'en' | 'ar'): Promise
     Provide a detailed analysis covering their tone of voice, key marketing messages, content strengths and weaknesses, and potential differentiation opportunities for a competitor.
     Use Google Search to gather information about the company and its marketing.
     IMPORTANT: The entire response must be in ${lang === 'ar' ? 'Arabic' : 'English'}.
-    Your response MUST be a single, valid JSON object that conforms to the following structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
+    Your response MUST be a single, valid JSON object that conforms to a specific structure. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object.
     JSON Structure:
     ${jsonStructure}
     `;
@@ -241,16 +271,34 @@ export const analyzeCompetitor = async (url: string, lang: 'en' | 'ar'): Promise
         }
     });
 
-    const jsonText = response.text.trim();
-    const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    const analysisDetails = JSON.parse(cleanedJsonText);
+    // The response text from a googleSearch tool is not guaranteed to be JSON.
+    // We need to find the JSON block within the text.
+    let jsonText = response.text.trim();
+    const jsonMatch = jsonText.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+        jsonText = jsonMatch[1];
+    } else {
+        // Fallback for when the model doesn't use markdown
+        const startIndex = jsonText.indexOf('{');
+        const endIndex = jsonText.lastIndexOf('}');
+        if (startIndex !== -1 && endIndex !== -1) {
+            jsonText = jsonText.substring(startIndex, endIndex + 1);
+        }
+    }
 
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
-        ?.map((chunk: any) => chunk.web)
-        .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
-        .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
+    try {
+        const analysisDetails = JSON.parse(jsonText);
 
-    return { ...analysisDetails, sources: sources };
+        const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+            ?.map((chunk: any) => chunk.web)
+            .filter((web: any) => web?.uri && web?.title) // Filter out any empty chunks
+            .map((web: any) => ({ uri: web.uri, title: web.title })) || [];
+
+        return { ...analysisDetails, sources: sources };
+    } catch (e) {
+        console.error("Failed to parse JSON from Gemini response:", jsonText);
+        throw new Error("The AI returned an invalid data structure for the analysis. Please try again.");
+    }
 };
 
 const repurposingSchema = {

@@ -20,47 +20,36 @@ import { SparklesIcon } from './components/icons';
 import type { Screen } from './types/index';
 
 const ConfigurationErrorScreen: React.FC = () => {
-  const debugInfo = {
-    typeofProcess: typeof process,
-    processEnvDefined: 'unknown',
-    apiKeyExists: 'unknown',
-    allEnvKeys: 'N/A',
-  };
-
-  try {
-    debugInfo.processEnvDefined = String(typeof process.env !== 'undefined');
-    if (typeof process.env !== 'undefined') {
-      debugInfo.apiKeyExists = String(!!process.env.API_KEY);
-      debugInfo.allEnvKeys = Object.keys(process.env).join(', ') || 'None';
-    }
-  } catch (e) {
-    // process might not be defined, which is a useful data point.
-  }
-
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-transparent text-gray-900 dark:text-gray-100 font-sans justify-center items-center p-4 text-center">
-      <div className="w-full max-w-lg mx-auto bg-red-500/10 border border-red-500/20 p-8 rounded-lg">
+      <div className="w-full max-w-lg mx-auto bg-red-500/10 border border-red-500/20 p-8 rounded-lg" dir="rtl">
         <SparklesIcon className="w-12 h-12 text-red-400 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-red-300">Configuration Error</h1>
+        <h1 className="text-2xl font-bold text-red-300">خطأ في الإعدادات</h1>
         <p className="text-md text-red-400 mt-2">
-          The application is not configured correctly. The Gemini API key is missing.
+          التطبيق غير مهيأ بشكل صحيح. مفتاح Gemini API مفقود.
         </p>
-        <p className="text-sm text-gray-500 mt-4">
-          Please ensure the <code>API_KEY</code> environment variable is set in your deployment environment. The application cannot function without it.
-        </p>
-        <div className="text-xs text-left text-gray-600 dark:text-gray-400 mt-6 bg-gray-100 dark:bg-gray-800/50 p-4 rounded-md border border-gray-300 dark:border-gray-600">
-          <h3 className="font-bold mb-2">Debugging Information:</h3>
-          <p>
-            - <code>typeof process</code>: <strong>{debugInfo.typeofProcess}</strong>
+
+        <div className="text-sm text-right text-gray-300 mt-6 bg-blue-900/30 border border-blue-500/40 p-4 rounded-md">
+          <h3 className="font-bold mb-2 text-white">الحل:</h3>
+          <p className="mb-2">
+            يبدو أنك تشغل هذا التطبيق مباشرة في المتصفح. لتوفير مفتاح API الخاص بك بأمان، يرجى اتباع الخطوات التالية:
           </p>
-          <p>
-            - <code>process.env</code> is defined: <strong>{debugInfo.processEnvDefined}</strong>
-          </p>
-          <p>
-            - <code>process.env.API_KEY</code> has value: <strong>{debugInfo.apiKeyExists}</strong>
-          </p>
-          <p className="break-all">
-            - Available <code>process.env</code> keys: <strong>{debugInfo.allEnvKeys}</strong>
+          <ol className="list-decimal list-inside space-y-2">
+            <li>
+              افتح أدوات المطور في متصفحك (اضغط <strong>F12</strong> أو <strong>Ctrl+Shift+I</strong>).
+            </li>
+            <li>
+              انتقل إلى تبويب <strong>"Console"</strong>.
+            </li>
+            <li>
+              انسخ الأمر التالي، استبدل <code>'YOUR_KEY_HERE'</code> بمفتاحك الفعلي، ثم اضغط على Enter.
+            </li>
+          </ol>
+          <pre className="mt-3 bg-gray-900/80 p-3 rounded-md text-cyan-300 text-xs text-left break-all">
+            <code>localStorage.setItem('GEMINI_API_KEY', 'YOUR_KEY_HERE')</code>
+          </pre>
+          <p className="mt-3">
+            بعد تنفيذ الأمر، قم <strong>بتحديث الصفحة (F5)</strong>. سيتم حفظ المفتاح بأمان في متصفحك.
           </p>
         </div>
       </div>
