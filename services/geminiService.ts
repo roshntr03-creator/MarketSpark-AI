@@ -7,12 +7,11 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Campaign, SocialPost, EditedImage, GeneratedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool } from '../types/index';
 
 let ai: GoogleGenAI | null = null;
+let apiKey: string | undefined | null = undefined;
 
 // Gracefully handle initialization.
 // The app can then check the configuration status.
 try {
-  let apiKey: string | undefined | null = undefined;
-
   // First, try the standard environment variable method.
   // This might be undefined in some environments, so we check for `process` first.
   if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
@@ -39,6 +38,15 @@ try {
 export const isApiConfigured = (): boolean => {
   return !!ai;
 };
+
+/**
+ * Retrieves the configured API key.
+ * @returns {string | null} The API key if configured, otherwise null.
+ */
+export const getApiKey = (): string | null => {
+  return apiKey || null;
+};
+
 
 // Internal function to check for the AI client before every API call.
 const checkApi = () => {
