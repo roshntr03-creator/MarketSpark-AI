@@ -14,7 +14,7 @@ interface CreationHistoryContextType {
 const CreationHistoryContext = createContext<CreationHistoryContextType | undefined>(undefined);
 
 const HISTORY_STORAGE_KEY = 'creationHistory';
-const MAX_HISTORY_ITEMS = 50; // Increased limit
+const MAX_HISTORY_ITEMS = 20; // Reduced limit to prevent storage quota errors
 
 export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [history, setHistory] = useState<CreationHistoryItem[]>(() => {
