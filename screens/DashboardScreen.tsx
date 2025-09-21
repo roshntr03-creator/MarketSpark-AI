@@ -17,6 +17,48 @@ const WEEKLY_CREATION_GOAL = 15;
 
 const kebabToCamel = (str: string) => str.replace(/-([a-z])/g, g => g[1].toUpperCase());
 
+// Helper function to create a summary of a creation, removing large data like base64 strings.
+const createCreationSummary = (item: CreationHistoryItem) => {
+    // A simplified object to send to the AI for suggestions.
+    const summary: { tool: Tool; result: any } = {
+        tool: item.tool,
+        result: {},
+    };
+
+    const result = item.result;
+
+    if ('socialPosts' in result && 'campaign' in result) { // WorkflowResult
+         const workflow = result as WorkflowResult;
+        summary.result = { workflow: 'New Product Launch', productName: workflow.campaign.campaign.productName };
+    } else if ('campaign' in result) { // Campaign
+        summary.result = { productName: (result as Campaign).campaign.productName, tagline: (result as Campaign).campaign.tagline };
+    } else if (Array.isArray(result) && result.length > 0 && 'platform' in result[0]) { // SocialPost[]
+        const posts = result as SocialPost[];
+        summary.result = { topic: `Posts for ${posts[0].platform}`, count: posts.length };
+    } else if ('edited' in result && 'original' in result) { // EditedImage
+        summary.result = { prompt: (result as EditedImage).prompt };
+    } else if ('image' in result && 'prompt' in result) { // GeneratedImage
+        summary.result = { prompt: (result as GeneratedImage).prompt };
+    } else if ('videoUri' in result) { // GeneratedVideo
+        summary.result = { prompt: (result as GeneratedVideo).prompt };
+    } else if ('competitorName' in result) { // CompetitorAnalysis
+        const analysis = result as CompetitorAnalysis;
+        summary.result = { competitorName: analysis.competitorName, summary: analysis.analysisSummary.substring(0, 200) + '...' };
+    } else if ('twitterThread' in result) { // ContentRepurposingResult
+        summary.result = { formats: ['Twitter', 'Instagram', 'LinkedIn', 'Video Reel'] };
+    } else if ('strategyName' in result) { // ContentStrategy
+        const strategy = result as ContentStrategy;
+        summary.result = { strategyName: strategy.strategyName, goal: strategy.overallGoal };
+    } else if ('logoStyles' in result) { // AssetKit
+        summary.result = { description: 'Brand Asset Kit Generated' };
+    } else {
+        summary.result = 'A creation was made.';
+    }
+
+    return summary;
+};
+
+
 const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, className }) => {
     const iconMap: Record<Tool, React.ElementType> = {
         'campaign-generator': SparklesIcon,
@@ -142,7 +184,8 @@ const SmartSuggestions: React.FC<{ setActiveScreen: (s: Screen) => void }> = ({ 
         const fetchSuggestions = async () => {
             try {
                 setIsLoading(true);
-                const result = await generateDashboardSuggestions(lastCreation, lang);
+                const creationSummary = createCreationSummary(lastCreation);
+                const result = await generateDashboardSuggestions(creationSummary, lang);
                 setSuggestions(result);
             } catch (error) {
                 console.error("Failed to fetch dashboard suggestions:", error);

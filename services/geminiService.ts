@@ -66,6 +66,6 @@ export const generateMarketingTipForTool = (tool: Tool, lang: 'en' | 'ar'): Prom
     return invokeFunction('generate-marketing-tip-for-tool', { tool, lang });
 };
 
-export const generateDashboardSuggestions = (lastCreation: CreationHistoryItem, lang: 'en' | 'ar'): Promise<DashboardSuggestion[]> => {
-    return invokeFunction('generate-dashboard-suggestions', { lastCreation, lang });
+export const generateDashboardSuggestions = (lastCreationSummary: any, lang: 'en' | 'ar'): Promise<DashboardSuggestion[]> => {
+    return invokeFunction('generate-dashboard-suggestions', { lastCreation: lastCreationSummary, lang });
 };
