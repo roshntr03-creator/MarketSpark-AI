@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
   login: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
+  loginWithGoogle: () => Promise<{ error: AuthError | null }>;
   logout: () => Promise<{ error: AuthError | null }>;
 }
 
@@ -49,6 +50,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return supabase.auth.signInWithPassword({ email, password: pass });
   };
 
+  const loginWithGoogle = async () => {
+    return supabase.auth.signInWithOAuth({ provider: 'google' });
+  };
+
   const logout = async () => {
     return supabase.auth.signOut();
   };
@@ -59,6 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!session?.user,
     signUp,
     login,
+    loginWithGoogle,
     logout 
   };
 
