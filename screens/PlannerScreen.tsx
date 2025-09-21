@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useMemo } from 'react';
-import type { Screen, PlannerItem, CreationResult, Campaign, CampaignDetails } from '../types/index';
+import type { Screen, PlannerItem, CreationHistoryItem, Campaign, SocialPost, GeneratedImage, GeneratedVideo, EditedImage, WorkflowResult } from '../types/index';
 import { usePlanner } from '../contexts/PlannerProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
@@ -12,44 +12,44 @@ interface PlannerScreenProps {
   setActiveScreen: (screen: Screen) => void;
 }
 
-const PlannerCard: React.FC<{ item: PlannerItem; creation: CreationResult | undefined }> = ({ item, creation }) => {
+const kebabToCamel = (str: string) => str.replace(/-([a-z])/g, g => g[1].toUpperCase());
+
+const PlannerCard: React.FC<{ item: PlannerItem; creationItem: CreationHistoryItem | undefined }> = ({ item, creationItem }) => {
     const { t } = useTranslations();
     
     let title = item.title || 'Scheduled Item';
     let description = item.contentIdea || 'No details available.';
-    let toolName = 'Unknown';
+    let toolName = item.format || 'Scheduled';
     
-    if (item.creationId && creation) {
-        if ('campaign' in creation) {
-            // FIX: Correctly access nested properties of the Campaign object.
-            // The 'creation' object can be a Campaign or a WorkflowResult.
-            // A WorkflowResult has a 'campaign' property which is a Campaign object,
-            // so we need to go one level deeper to get the CampaignDetails.
-            const campaignDetails: CampaignDetails = 'productName' in creation.campaign
-                ? (creation.campaign as CampaignDetails)
-                : (creation.campaign as Campaign).campaign;
-            title = campaignDetails.productName + ' Campaign';
-            description = campaignDetails.tagline;
-            toolName = t.campaignGenerator;
-        } else if (Array.isArray(creation) && 'platform' in creation[0]) {
+    const creation = creationItem?.result;
+    const tool = creationItem?.tool;
+
+    if (tool) {
+        toolName = t[kebabToCamel(tool) as keyof typeof t] || tool;
+    }
+
+    if (creation) {
+         if ('socialPosts' in creation && 'campaign' in creation) { // WorkflowResult
+            const workflowResult = creation as WorkflowResult;
+            title = `${workflowResult.campaign.campaign.productName} Workflow`;
+            description = workflowResult.campaign.campaign.tagline;
+        } else if ('campaign' in creation) { // Campaign
+            const campaign = creation as Campaign;
+            title = `${campaign.campaign.productName} Campaign`;
+            description = campaign.campaign.tagline;
+        } else if (Array.isArray(creation) && 'platform' in creation[0]) { // SocialPost[]
             title = `${creation[0].platform} Posts`;
             description = creation[0].content.substring(0, 100) + '...';
-            toolName = t.socialPostAssistant;
-        } else if ('edited' in creation) {
+        } else if ('edited' in creation) { // EditedImage
             title = 'Edited Image';
             description = `Prompt: ${creation.prompt}`;
-            toolName = t.imageEditor;
-        } else if ('image' in creation) {
+        } else if ('image' in creation) { // GeneratedImage
             title = 'Generated Image';
             description = `Prompt: ${creation.prompt}`;
-            toolName = t.imageGenerator;
-        } else if ('videoUri' in creation) {
+        } else if ('videoUri' in creation) { // GeneratedVideo
             title = 'Generated Video';
             description = `Prompt: ${creation.prompt}`;
-            toolName = t.videoGenerator;
         }
-    } else {
-        toolName = t.contentStrategist;
     }
 
     return (
@@ -91,13 +91,13 @@ const PlannerScreen: React.FC<PlannerScreenProps> = ({ setActiveScreen }) => {
                 </div>
                 
                 <div className="mt-8 space-y-8">
-                    {Object.keys(groupedItems).length > 0 ? Object.keys(groupedItems).map(date => (
+                    {Object.keys(groupedItems).length > 0 ? Object.keys(groupedItems).sort((a,b) => new Date(a).getTime() - new Date(b).getTime()).map(date => (
                         <div key={date}>
                             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3">{date}</h2>
                             <div className="space-y-4">
                                 {groupedItems[date].map(item => {
-                                    const creation = item.creationId ? getCreationById(item.creationId)?.result : undefined;
-                                    return <PlannerCard key={item.id} item={item} creation={creation} />
+                                    const creationItem = item.creationId ? getCreationById(item.creationId) : undefined;
+                                    return <PlannerCard key={item.id} item={item} creationItem={creationItem} />
                                 })}
                             </div>
                         </div>

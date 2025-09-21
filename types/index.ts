@@ -69,7 +69,7 @@ export interface GeneratedImageWithPost extends GeneratedImage {
 }
 
 export interface GeneratedVideo {
-    videoUri: string;
+    videoUri: string; // This will now be a publicly accessible URL (e.g., Supabase signed URL)
     prompt: string;
 }
 
@@ -140,14 +140,16 @@ export interface DashboardSuggestion {
 export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | WorkflowResult;
 
 export interface CreationHistoryItem {
-  id: string;
+  id: string; // Corresponds to the database primary key
+  user_id: string;
   tool: Tool;
   timestamp: number;
   result: CreationResult;
 }
 
 export interface PlannerItem {
-    id: string;
+    id: string; // Corresponds to the database primary key
+    user_id: string;
     creationId?: string; // For linking back to a full creation
     scheduledDateTime: string;
     // For content strategy items that are not full creations yet

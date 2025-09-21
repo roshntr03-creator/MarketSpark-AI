@@ -10,7 +10,7 @@ import { GlobeAltIcon, UserCircleIcon, MegaphoneIcon } from '../components/icons
 
 const SettingsScreen: React.FC = () => {
   const { lang, setLang, t } = useTranslations();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { brandPersona, setBrandPersona } = useBrand();
   
   const activeSegmentClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-md';
@@ -76,7 +76,7 @@ const SettingsScreen: React.FC = () => {
                 <div className="mt-4 pt-4 border-t border-gray-200/80 dark:border-white/10 space-y-4">
                     <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{t.signedInAs}</p>
-                        <p className="font-semibold text-gray-700 dark:text-gray-300">admin.sa@gmail.com</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{user?.email}</p>
                     </div>
                     <button
                         onClick={logout}

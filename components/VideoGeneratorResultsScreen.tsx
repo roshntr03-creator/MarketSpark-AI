@@ -8,7 +8,6 @@ import { useTranslations } from '../contexts/LanguageProvider';
 import ToolHeader from './ToolHeader';
 import ScheduleModal from './ScheduleModal';
 import { PlusCircleIcon } from './icons';
-import { getApiKey } from '../services/geminiService';
 import Spinner from './Spinner';
 
 const VideoGeneratorResultsScreen: React.FC = () => {
@@ -29,9 +28,8 @@ const VideoGeneratorResultsScreen: React.FC = () => {
     const { videoUri, prompt } = result;
 
     useEffect(() => {
-        const apiKey = getApiKey();
-        if (!videoUri || !apiKey) {
-            setVideoError("Video URI or API Key is missing.");
+        if (!videoUri) {
+            setVideoError("Video URI is missing.");
             setIsLoadingVideo(false);
             return;
         }
@@ -41,8 +39,8 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             setIsLoadingVideo(true);
             setVideoError(null);
             try {
-                const videoUrl = `${videoUri}&key=${apiKey}`;
-                const response = await fetch(videoUrl);
+                // The videoUri from the Supabase function is now a direct, publicly accessible URL.
+                const response = await fetch(videoUri);
                 if (!response.ok) {
                     throw new Error(`Error fetching video: ${response.status} ${response.statusText}`);
                 }

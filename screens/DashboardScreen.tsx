@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Changed 'VideoGenerator' to the correct exported type 'GeneratedVideo'.
-import type { Screen, CreationHistoryItem, Tool, Campaign, SocialPost, GeneratedImage, GeneratedVideo, DashboardSuggestion, CreationResult } from '../types/index';
+import type { Screen, CreationHistoryItem, Tool, Campaign, SocialPost, GeneratedImage, GeneratedVideo, DashboardSuggestion, CreationResult, WorkflowResult, EditedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit } from '../types/index';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
@@ -14,6 +14,8 @@ import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBub
 import { generateMarketingTip, generateMarketingTipForTool, generateDashboardSuggestions } from '../services/geminiService';
 
 const WEEKLY_CREATION_GOAL = 15;
+
+const kebabToCamel = (str: string) => str.replace(/-([a-z])/g, g => g[1].toUpperCase());
 
 const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, className }) => {
     const iconMap: Record<Tool, React.ElementType> = {
@@ -34,11 +36,49 @@ const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, classNam
 
 const getCreationDetails = (item: CreationHistoryItem): string => {
     const result = item.result;
-    if ('campaign' in result) return (result as Campaign).campaign.productName;
-    if (Array.isArray(result) && 'platform' in result[0]) return `${(result as SocialPost[])[0].platform} Posts`;
-    if ('prompt' in result) return `Prompt: "${(result as GeneratedImage).prompt.substring(0, 40)}..."`;
+
+    // Workflow
+    if ('socialPosts' in result && 'campaign' in result) { 
+        return `Workflow: ${(result as WorkflowResult).campaign.campaign.productName}`;
+    }
+    // Campaign
+    if ('campaign' in result) {
+        return `Campaign: ${(result as Campaign).campaign.productName}`;
+    }
+    // Social Posts
+    if (Array.isArray(result) && result.length > 0 && 'platform' in result[0]) {
+        return `${result.length} ${(result as SocialPost[])[0].platform} Posts`;
+    }
+    // Edited Image
+    if ('edited' in result && 'original' in result) {
+         return `Image Edit: "${(result as EditedImage).prompt.substring(0, 40)}..."`;
+    }
+    // Generated Image
+    if ('image' in result && 'prompt' in result) {
+        return `Image Gen: "${(result as GeneratedImage).prompt.substring(0, 40)}..."`;
+    }
+    // Generated Video
+    if ('videoUri' in result) {
+        return `Video Gen: "${(result as GeneratedVideo).prompt.substring(0, 40)}..."`;
+    }
+    // Competitor Analysis
+    if ('competitorName' in result) {
+        return `Analysis for: ${(result as CompetitorAnalysis).competitorName}`;
+    }
+    // Content Repurposing
+    if ('twitterThread' in result) {
+        return `Repurposed Content`;
+    }
+    // Content Strategy
+    if ('strategyName' in result) {
+        return `Strategy: ${(result as ContentStrategy).strategyName}`;
+    }
+    // Asset Kit
+    if ('logoStyles' in result) {
+        return `Brand Asset Kit`;
+    }
     return 'Creation';
-}
+};
 
 
 const WeeklyGoal: React.FC = () => {
@@ -234,7 +274,7 @@ const DashboardScreen: React.FC<{ setActiveScreen: (screen: Screen) => void }> =
                                     <div className="flex items-center gap-4">
                                         <ToolIcon tool={item.tool} className="w-6 h-6 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">{t[item.tool as keyof typeof t] || item.tool.replace(/-/g, ' ')}</p>
+                                            <p className="font-semibold text-gray-800 dark:text-gray-200">{t[kebabToCamel(item.tool) as keyof typeof t] || item.tool.replace(/-/g, ' ')}</p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                                 {getCreationDetails(item)}
                                             </p>

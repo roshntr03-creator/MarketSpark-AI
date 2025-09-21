@@ -3,43 +3,68 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
+  session: Session | null;
+  user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, pass: string) => boolean;
-  logout: () => void;
+  signUp: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
+  login: (email: string, pass: string) => Promise<{ error: AuthError | null }>;
+  logout: () => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('isAuthenticated', isAuthenticated.toString());
-  }, [isAuthenticated]);
-  
-  // NOTE: This is a mock login function. 
-  // In a real application, you would validate credentials against a backend.
-  const login = (email: string, pass: string) => {
-    if (email === 'admin.sa@gmail.com' && pass === 'admin34') {
-        setIsAuthenticated(true);
-        return true;
+    const getSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
     }
-    return false;
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+  
+  const signUp = async (email: string, pass: string) => {
+    return supabase.auth.signUp({ email, password: pass });
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
+  const login = async (email: string, pass: string) => {
+    return supabase.auth.signInWithPassword({ email, password: pass });
   };
 
-  const value = { isAuthenticated, login, logout };
+  const logout = async () => {
+    return supabase.auth.signOut();
+  };
+
+  const value = { 
+    session,
+    user,
+    isAuthenticated: !!session?.user,
+    signUp,
+    login,
+    logout 
+  };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

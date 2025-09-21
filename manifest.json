@@ -1,8 +1,21 @@
 {
   "short_name": "MarketingAI",
   "name": "Marketing AI",
+  "description": "Your all-in-one AI-powered marketing assistant.",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#090A0F",
-  "background_color": "#090A0F"
+  "theme_color": "#030712",
+  "background_color": "#030712"
 }

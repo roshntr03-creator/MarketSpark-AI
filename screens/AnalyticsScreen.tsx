@@ -11,6 +11,8 @@ interface AnalyticsScreenProps {
   setActiveScreen: (screen: Screen) => void;
 }
 
+const kebabToCamel = (str: string) => str.replace(/-([a-z])/g, g => g[1].toUpperCase());
+
 const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) => {
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
@@ -36,7 +38,7 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                             {sortedTools.length > 0 ? sortedTools.map(([tool, count]) => (
                                 <div key={tool}>
                                     <div className="flex justify-between items-center mb-1">
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t[tool as keyof typeof t] || tool.replace(/-/g, ' ')}</p>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t[kebabToCamel(tool) as keyof typeof t] || tool.replace(/-/g, ' ')}</p>
                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</p>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">

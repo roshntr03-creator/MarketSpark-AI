@@ -21,19 +21,19 @@ root.render(
   <React.StrictMode>
     <ThemeProvider>
       <LanguageProvider>
-        <UsageStatsProvider>
-          <CreationHistoryProvider>
-            <PlannerProvider>
-              <BrandProvider>
-                <MarketingToolsProvider>
-                  <AuthProvider>
+        <AuthProvider>
+          <UsageStatsProvider>
+            <CreationHistoryProvider>
+              <PlannerProvider>
+                <BrandProvider>
+                  <MarketingToolsProvider>
                     <App />
-                  </AuthProvider>
-                </MarketingToolsProvider>
-              </BrandProvider>
-            </PlannerProvider>
-          </CreationHistoryProvider>
-        </UsageStatsProvider>
+                  </MarketingToolsProvider>
+                </BrandProvider>
+              </PlannerProvider>
+            </CreationHistoryProvider>
+          </UsageStatsProvider>
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   </React.StrictMode>
