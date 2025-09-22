@@ -55,10 +55,22 @@ const VideoGeneratorScreen: React.FC = () => {
 
     const [prompt, setPrompt] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [clearUploader, setClearUploader] = useState(0);
     const [isPolling, setIsPolling] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [operation, setOperation] = useState<any | null>(null);
     
+    useEffect(() => {
+        if (!imageFile) {
+            setImagePreview(null);
+            return;
+        }
+        const objectUrl = URL.createObjectURL(imageFile);
+        setImagePreview(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [imageFile]);
+
     useEffect(() => {
         // FIX: Replaced NodeJS.Timeout with a browser-compatible type for setTimeout's return value.
         let timeoutId: ReturnType<typeof setTimeout>;
@@ -120,6 +132,11 @@ const VideoGeneratorScreen: React.FC = () => {
         runGenerateVideo();
     };
 
+    const handleClearImage = () => {
+        setImageFile(null);
+        setClearUploader(c => c + 1);
+    };
+
     if (isPolling) return <VideoLoadingScreen />;
     if (error) return <ErrorScreen error={error} onRetry={runGenerateVideo} />;
 
@@ -143,7 +160,20 @@ const VideoGeneratorScreen: React.FC = () => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.videoGeneratorImagePrompt}</label>
-                        <ImageUploader onImageUpload={setImageFile} />
+                        {imagePreview ? (
+                            <div className="mt-2 space-y-3">
+                                <img src={imagePreview} alt="Selected preview" className="rounded-lg w-full max-w-sm mx-auto object-contain" />
+                                <button
+                                    type="button"
+                                    onClick={handleClearImage}
+                                    className="w-full bg-gray-600/50 hover:bg-gray-700/60 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    {t.clearImageButton}
+                                </button>
+                            </div>
+                        ) : (
+                            <ImageUploader onImageUpload={setImageFile} clearTrigger={clearUploader} />
+                        )}
                     </div>
                     <button
                         type="submit"
