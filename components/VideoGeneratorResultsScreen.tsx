@@ -39,7 +39,7 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             setIsLoadingVideo(true);
             setVideoError(null);
             try {
-                // The videoUri from the Supabase function is now a direct, publicly accessible URL.
+                // The videoUri is a data URI, fetched and encoded by the backend.
                 const response = await fetch(videoUri);
                 if (!response.ok) {
                     throw new Error(`Error fetching video: ${response.status} ${response.statusText}`);
