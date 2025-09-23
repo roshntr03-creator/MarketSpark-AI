@@ -45,12 +45,12 @@ const App: React.FC = () => {
     }
   };
   
-  if (!session) {
-    return <LoginScreen />;
-  }
-
   if (!onboardingComplete) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+  
+  if (!session) {
+    return <LoginScreen />;
   }
 
   return (

@@ -10,6 +10,20 @@ interface OnboardingFlowProps {
   onComplete: () => void;
 }
 
+const LanguageSwitcher: React.FC = () => {
+  const { lang, setLang } = useTranslations();
+  const activeSegmentClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow';
+  const inactiveSegmentClasses = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50';
+
+  return (
+    <div className="absolute top-6 right-6 rtl:right-auto rtl:left-6 bg-gray-200/80 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg p-1 flex z-10">
+      <button onClick={() => setLang('ar')} className={`py-1 px-4 rounded-md transition-colors text-sm font-semibold ${lang === 'ar' ? activeSegmentClasses : inactiveSegmentClasses}`}>العربية</button>
+      <button onClick={() => setLang('en')} className={`py-1 px-4 rounded-md transition-colors text-sm font-semibold ${lang === 'en' ? activeSegmentClasses : inactiveSegmentClasses}`}>English</button>
+    </div>
+  );
+};
+
+
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const { t } = useTranslations();
@@ -51,7 +65,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const currentStep = onboardingSteps[step];
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-transparent text-gray-900 dark:text-gray-100 font-sans justify-center items-center p-4">
+    <div className="relative flex flex-col h-screen bg-gray-50 dark:bg-transparent text-gray-900 dark:text-gray-100 font-sans justify-center items-center p-4">
+        <LanguageSwitcher />
         <div className="w-full max-w-sm mx-auto text-center flex flex-col justify-between h-full max-h-[500px]">
             <div className="flex-grow flex flex-col items-center justify-center">
                 <div className="p-4 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full mb-6">

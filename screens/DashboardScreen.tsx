@@ -243,8 +243,8 @@ const MarketingTip: React.FC = () => {
 
     const mostUsedTool = useMemo(() => {
         if (Object.keys(rawStats).length === 0) return null;
-        // FIX: Use Number() to safely convert potentially unknown values for sorting.
-        return Object.entries(rawStats).sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))[0][0] as Tool;
+        // FIX: Use `|| 0` to safely convert potentially undefined values for sorting.
+        return Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0))[0][0] as Tool;
     }, [rawStats]);
 
     useEffect(() => {
