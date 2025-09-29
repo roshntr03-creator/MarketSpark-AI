@@ -13,8 +13,8 @@ const SettingsScreen: React.FC = () => {
   const { logout, user } = useAuth();
   const { brandPersona, setBrandPersona } = useBrand();
   
-  const activeSegmentClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-md';
-  const inactiveSegmentClasses = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800';
+  const activeSegmentClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 shadow-sm';
+  const inactiveSegmentClasses = 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/50 dark:hover:bg-gray-800/50';
 
   return (
     <div className="animate-fade-in max-w-2xl mx-auto space-y-8 p-4 sm:p-6 md:p-8">

@@ -17,9 +17,9 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // FIX: Use `|| 0` to safely convert potentially undefined values to numbers for arithmetic operations.
+    // FIX: Provide a default value of 0 for `count` as it can be undefined.
     const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (count || 0), 0);
-    // FIX: Use `|| 0` to safely convert potentially undefined values for sorting.
+    // FIX: Provide a default value of 0 for `a` and `b` to prevent arithmetic operations on undefined values.
     const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0));
 
     const maxActivity = Math.max(...recentActivity.map(a => a.value), 0) || 1;
@@ -46,7 +46,7 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                                         <div 
                                             className="bg-indigo-500 h-2.5 rounded-full" 
-                                            // FIX: Use `|| 0` to safely convert potentially undefined value to a number for arithmetic operation and guard against division by zero.
+                                            // FIX: Provide default values for `count` (0) and `totalCreations` (1) to handle potential undefined values and prevent division by zero.
                                             style={{ width: `${((count || 0) / (totalCreations || 1)) * 100}%` }}
                                         ></div>
                                     </div>

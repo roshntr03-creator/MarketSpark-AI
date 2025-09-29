@@ -14,7 +14,7 @@ interface ToolCardProps {
 
 const ToolCard: React.FC<ToolCardProps> = ({ title, description, Icon, onClick, disabled }) => {
     const baseClasses = "group relative w-full p-6 bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border rounded-xl transition-all duration-300 ease-in-out text-left";
-    const enabledClasses = "border-gray-200/80 dark:border-white/10 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 cursor-pointer";
+    const enabledClasses = "border-gray-200/80 dark:border-white/10 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-1 cursor-pointer";
     const disabledClasses = "border-gray-200/50 dark:border-gray-700/50 opacity-50 cursor-not-allowed";
     
     return (

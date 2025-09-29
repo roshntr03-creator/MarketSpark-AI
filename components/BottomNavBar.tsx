@@ -20,12 +20,12 @@ const NavItem: React.FC<{
     isActive: boolean,
     onClick: () => void
 }> = ({ screen, label, Icon, isActive, onClick }) => {
-    const activeClasses = 'text-indigo-600 dark:text-indigo-400';
-    const inactiveClasses = 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5';
+    const activeClasses = 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-semibold';
+    const inactiveClasses = 'text-gray-500 dark:text-gray-400 hover:text-indigo-600/80 dark:hover:text-indigo-400/80';
     return (
         <button
             onClick={onClick}
-            className={`flex flex-col items-center justify-center gap-1 w-full py-2 rounded-lg transition-all duration-200 ${isActive ? activeClasses : inactiveClasses}`}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-14 rounded-xl transition-all duration-200 ${isActive ? activeClasses : inactiveClasses}`}
             aria-current={isActive ? 'page' : undefined}
         >
             <Icon className="w-6 h-6" />
@@ -48,7 +48,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeScreen, setActiveScre
 
     return (
         <nav className="w-full border-t border-gray-200/80 dark:border-white/10 bg-white/60 dark:bg-gray-900/40 backdrop-blur-lg">
-            <div className="flex justify-around items-center max-w-xl mx-auto h-20 px-2">
+            <div className="flex justify-around items-center max-w-xl mx-auto py-2 px-2 gap-1">
                 {navItems.map((item) => (
                     <NavItem
                         key={item.screen}

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo } from '../types/index';
+import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo, GeneratedImage, EditedImage, WorkflowResult } from '../types/index';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 
@@ -60,17 +60,24 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
       result,
     };
     
-    // Create a separate version for storage, modifying it if necessary.
-    const creationToStore: CreationHistoryItem = { ...newCreation };
+    // Create a deep copy for storage to avoid modifying the object returned to the UI.
+    const creationToStore: CreationHistoryItem = JSON.parse(JSON.stringify(newCreation));
+    
+    const timestampString = new Date(creationToStore.timestamp).toLocaleString();
 
     if (tool === 'video-generator') {
-        const videoResult = creationToStore.result as GeneratedVideo;
-        // Replace the huge data URI with a placeholder message for storage.
-        // This prevents database bloat and fetch errors, while preserving the prompt.
-        creationToStore.result = {
-            prompt: videoResult.prompt,
-            videoUri: `Video generated on ${new Date(creationToStore.timestamp).toLocaleString()}`
-        };
+        (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
+    } else if (tool === 'image-generator') {
+        (creationToStore.result as GeneratedImage).image = `Image generated on ${timestampString}`;
+    } else if (tool === 'image-editor') {
+        const editedImageResult = creationToStore.result as EditedImage;
+        editedImageResult.original = `Original image from ${timestampString}`;
+        editedImageResult.edited = `Edited image from ${timestampString}`;
+    } else if (tool === 'workflow') {
+        const workflowResult = creationToStore.result as WorkflowResult;
+        workflowResult.images.forEach((img) => {
+            img.image = `Image for post generated on ${timestampString}`;
+        });
     }
     
     // Optimistically update the local UI history with the modified (storage-safe) version.

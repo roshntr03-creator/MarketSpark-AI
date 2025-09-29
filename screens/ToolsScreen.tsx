@@ -6,7 +6,7 @@ import React from 'react';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
 import ToolCard from '../components/ToolCard';
-import { SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon, SwatchIcon, WorkflowIcon } from '../components/icons';
+import { SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, LightBulbIcon, SwatchIcon, WorkflowIcon, RocketLaunchIcon, AdjustmentsIcon } from '../components/icons';
 import type { Tool, Screen } from '../types/index';
 
 // Tool-specific screen components
@@ -50,10 +50,10 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
     const tools: { id: Tool; title: string; description: string; Icon: React.ElementType; disabled?: boolean }[] = [
         { id: 'workflow', title: t.workflow, description: t.workflowDesc, Icon: WorkflowIcon },
         { id: 'prompt-enhancer', title: t.promptEnhancer, description: t.promptEnhancerDesc, Icon: SparklesIcon },
-        { id: 'campaign-generator', title: t.campaignGenerator, description: t.campaignGeneratorDesc, Icon: SparklesIcon },
+        { id: 'campaign-generator', title: t.campaignGenerator, description: t.campaignGeneratorDesc, Icon: RocketLaunchIcon },
         { id: 'social-post-assistant', title: t.socialPostAssistant, description: t.socialPostAssistantDesc, Icon: ChatBubbleLeftRightIcon },
         { id: 'image-generator', title: t.imageGenerator, description: t.imageGeneratorDesc, Icon: PhotoIcon },
-        { id: 'image-editor', title: t.imageEditor, description: t.imageEditorDesc, Icon: PhotoIcon },
+        { id: 'image-editor', title: t.imageEditor, description: t.imageEditorDesc, Icon: AdjustmentsIcon },
         { id: 'video-generator', title: t.videoGenerator, description: t.videoGeneratorDesc, Icon: PlayCircleIcon },
         { id: 'content-strategist', title: t.contentStrategist, description: t.contentStrategistDesc, Icon: LightBulbIcon },
         { id: 'competitor-analysis', title: t.competitorAnalysis, description: t.competitorAnalysisDesc, Icon: MagnifyingGlassIcon },

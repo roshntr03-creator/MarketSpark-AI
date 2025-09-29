@@ -20,7 +20,7 @@ const NavItem: React.FC<{
     isActive: boolean,
     onClick: () => void
 }> = ({ label, Icon, isActive, onClick }) => {
-    const activeClasses = 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400';
+    const activeClasses = 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300';
     const inactiveClasses = 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white';
     
     return (

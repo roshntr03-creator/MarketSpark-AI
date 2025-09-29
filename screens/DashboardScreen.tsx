@@ -9,7 +9,7 @@ import { useTranslations } from '../contexts/LanguageProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
-import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, SwatchIcon, WorkflowIcon } from '../components/icons';
+import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, SwatchIcon, WorkflowIcon, AdjustmentsIcon } from '../components/icons';
 // FIX: Imported 'generateMarketingTip' to resolve a 'not found' error.
 import { generateMarketingTip, generateMarketingTipForTool, generateDashboardSuggestions } from '../services/geminiService';
 
@@ -62,9 +62,9 @@ const createCreationSummary = (item: CreationHistoryItem) => {
 const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, className }) => {
     // FIX: Add 'prompt-enhancer' to the icon map to match the 'Tool' type.
     const iconMap: Record<Tool, React.ElementType> = {
-        'campaign-generator': SparklesIcon,
+        'campaign-generator': RocketLaunchIcon,
         'social-post-assistant': ChatBubbleLeftRightIcon,
-        'image-editor': PhotoIcon,
+        'image-editor': AdjustmentsIcon,
         'image-generator': PhotoIcon,
         'video-generator': PlayCircleIcon,
         'competitor-analysis': MagnifyingGlassIcon,
@@ -245,7 +245,7 @@ const MarketingTip: React.FC = () => {
 
     const mostUsedTool = useMemo(() => {
         if (Object.keys(rawStats).length === 0) return null;
-        // FIX: Use `|| 0` to safely convert potentially undefined values for sorting.
+        // FIX: Provide a default value of 0 for `a` and `b` to prevent arithmetic operations on undefined values.
         return Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0))[0][0] as Tool;
     }, [rawStats]);
 
