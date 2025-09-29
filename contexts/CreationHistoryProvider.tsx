@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import type { Tool, CreationHistoryItem, CreationResult } from '../types/index';
+import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo } from '../types/index';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 
@@ -48,33 +48,42 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
 
   const addCreation = useCallback((tool: Tool, result: CreationResult): CreationHistoryItem => {
     if (!user) {
-        // This should not happen if the UI is correctly blocking access, but as a safeguard:
         throw new Error("Cannot add creation: no user is signed in.");
     }
     
-    // Create the object for immediate UI update
+    // This is the object that will be returned for immediate use in the UI, with the full result.
     const newCreation: CreationHistoryItem = {
-      id: `${Date.now()}`, // Temporary ID, will be replaced by DB ID if needed
+      id: `${Date.now()}`, // Temporary ID
       user_id: user.id,
       tool,
       timestamp: Date.now(),
       result,
     };
     
-    // Optimistically update the UI
-    setHistory(prevHistory => [newCreation, ...prevHistory].slice(0, MAX_HISTORY_ITEMS));
+    // Create a separate version for storage, modifying it if necessary.
+    const creationToStore: CreationHistoryItem = { ...newCreation };
 
-    // Asynchronously insert into the database
+    if (tool === 'video-generator') {
+        const videoResult = creationToStore.result as GeneratedVideo;
+        // Replace the huge data URI with a placeholder message for storage.
+        // This prevents database bloat and fetch errors, while preserving the prompt.
+        creationToStore.result = {
+            prompt: videoResult.prompt,
+            videoUri: `Video generated on ${new Date(creationToStore.timestamp).toLocaleString()}`
+        };
+    }
+    
+    // Optimistically update the local UI history with the modified (storage-safe) version.
+    setHistory(prevHistory => [creationToStore, ...prevHistory].slice(0, MAX_HISTORY_ITEMS));
+
+    // Asynchronously insert the storage-safe version into the database.
     const insertToDB = async () => {
         try {
-            // We can't know the real DB ID without a round trip, so we insert and re-fetch if needed.
-            // For this app, just inserting is fine. The optimistic update is the main thing.
             const { error } = await supabase.from('creations').insert({
-                // Supabase will generate the 'id'
-                user_id: newCreation.user_id,
-                tool: newCreation.tool,
-                timestamp: new Date(newCreation.timestamp).toISOString(),
-                result: newCreation.result,
+                user_id: creationToStore.user_id,
+                tool: creationToStore.tool,
+                timestamp: new Date(creationToStore.timestamp).toISOString(),
+                result: creationToStore.result,
             });
             if (error) throw error;
         } catch(error) {
@@ -84,6 +93,7 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
     };
     insertToDB();
 
+    // Return the original, unmodified creation item for immediate use in the results screen.
     return newCreation;
   }, [user]);
 

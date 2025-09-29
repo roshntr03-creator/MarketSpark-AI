@@ -15,10 +15,10 @@ serve(async (req) => {
     try {
         const { prompt, image, brandPersona, lang } = await req.json();
 
-        // Restructured prompt to make audio a primary requirement.
+        // Updated prompt to be more specific and firm about the audio requirement.
         const fullPrompt = lang === 'ar'
-            ? `أنشئ فيديو ترويجي قصير. الموضوع الأساسي هو: "${prompt}". يجب أن يحتوي الفيديو على مسار صوتي مسموع وعالي الجودة مع موسيقى خلفية تناسب الحالة المزاجية. يجب أن يتوافق النمط المرئي مع شخصية علامتنا التجارية: "${brandPersona}".`
-            : `Generate a short promotional video. The core subject is: "${prompt}". The video must have a high-quality, audible soundtrack with background music that fits the mood. The visual style should align with our brand persona: "${brandPersona}".`;
+            ? `أنشئ فيديو ترويجي قصير. الموضوع الأساسي هو: "${prompt}". يجب أن يحتوي الفيديو على موسيقى تصويرية آلية مبهجة وحيوية مناسبة للترويج لمنتج. الصوت ضروري للغاية لهذا الفيديو. يجب أن يتوافق النمط المرئي مع شخصية علامتنا التجارية: "${brandPersona}".`
+            : `Generate a short promotional video. The core subject is: "${prompt}". The video must have an uplifting and energetic instrumental soundtrack suitable for a product promotion. Audio is absolutely essential for this video. The visual style should align with our brand persona: "${brandPersona}".`;
 
         let imagePayload;
         if (image) {
