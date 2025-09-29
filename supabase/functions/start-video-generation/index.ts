@@ -31,7 +31,6 @@ serve(async (req) => {
             image: imagePayload,
             config: {
                 numberOfVideos: 1,
-                generateAudio: true,
             },
         });
 
