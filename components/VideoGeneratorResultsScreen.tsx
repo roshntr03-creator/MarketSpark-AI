@@ -121,8 +121,7 @@ const VideoGeneratorResultsScreen: React.FC = () => {
                             <video 
                                 src={videoBlobUrl || ''}
                                 controls 
-                                autoPlay
-                                loop
+                                playsInline
                                 className="w-full h-full"
                             />
                         )}
