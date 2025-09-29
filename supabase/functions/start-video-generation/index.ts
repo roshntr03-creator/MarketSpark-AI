@@ -15,7 +15,7 @@ serve(async (req) => {
     try {
         const { prompt, image, brandPersona } = await req.json();
 
-        const fullPrompt = `Generate a short video with a suitable soundtrack based on this prompt: "${prompt}". The video should align with our brand persona: "${brandPersona}".`;
+        const fullPrompt = `Generate a short video based on the following prompt: "${prompt}". The video MUST include a suitable soundtrack that matches the mood of the video. The video should also align with our brand persona: "${brandPersona}".`;
 
         let imagePayload;
         if (image) {
