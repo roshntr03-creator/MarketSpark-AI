@@ -91,6 +91,8 @@ export const translations = {
     assetKitGeneratorDesc: "Create logos, color palettes, and fonts for your brand.",
     workflow: "Marketing Workflows",
     workflowDesc: "Automate multi-step tasks like a new product launch.",
+    promptEnhancer: "Prompt Enhancer",
+    promptEnhancerDesc: "Refine your simple ideas into powerful, detailed prompts.",
     // Generic
     loadingTitle: "Brewing brilliance...",
     loadingSubtitle: "Our AI is crafting something amazing for you. Please wait a moment.",
@@ -246,6 +248,17 @@ export const translations = {
     generatedCampaign: "Generated Campaign",
     generatedSocialPosts: "Generated Social Posts",
     generatedImages: "Generated Images",
+    // Prompt Enhancer
+    promptEnhancerScreenTitle: "Prompt Enhancer",
+    promptEnhancerScreenSubtitle: "Turn your simple idea into a powerful, detailed prompt for better AI results.",
+    basicPromptLabel: "Your basic idea or prompt",
+    basicPromptPlaceholder: "e.g., an ad for my new smart mug",
+    promptContextLabel: "Context / Goal (Optional)",
+    promptContextPlaceholder: "e.g., to post on Instagram, targetting tech lovers",
+    generateSuggestionsButton: "Generate Suggestions",
+    promptEnhancerResultsTitle: "Enhanced Prompts",
+    enhancementSuggestions: "Here are a few enhanced versions of your prompt:",
+    usePromptButton: "Use this Prompt",
     // Analytics
     analyticsScreenTitle: "Analytics",
     analyticsScreenSubtitle: "Track your AI tool usage and content performance.",
@@ -340,6 +353,8 @@ export const translations = {
     assetKitGeneratorDesc: "أنشئ شعارات ولوحات ألوان وخطوط لعلامتك التجارية.",
     workflow: "مسارات العمل التسويقية",
     workflowDesc: "أتمتة المهام متعددة الخطوات مثل إطلاق منتج جديد.",
+    promptEnhancer: "محسّن الأوامر",
+    promptEnhancerDesc: "حوّل أفكارك البسيطة إلى أوامر قوية ومفصلة.",
     // Generic
     loadingTitle: "نصنع الإبداع...",
     loadingSubtitle: "يقوم الذكاء الاصطناعي لدينا بصياغة شيء مذهل من أجلك. يرجى الانتظار لحظة.",
@@ -495,6 +510,17 @@ export const translations = {
     generatedCampaign: "الحملة التي تم إنشاؤها",
     generatedSocialPosts: "منشورات التواصل الاجتماعي التي تم إنشاؤها",
     generatedImages: "الصور التي تم إنشاؤها",
+    // Prompt Enhancer
+    promptEnhancerScreenTitle: "محسّن الأوامر",
+    promptEnhancerScreenSubtitle: "حوّل فكرتك البسيطة إلى أمر قوي ومفصل للحصول على نتائج أفضل من الذكاء الاصطناعي.",
+    basicPromptLabel: "فكرتك أو أمرك الأساسي",
+    basicPromptPlaceholder: "مثال: إعلان عن الكوب الذكي الجديد",
+    promptContextLabel: "السياق / الهدف (اختياري)",
+    promptContextPlaceholder: "مثال: للنشر على انستغرام، يستهدف محبي التكنولوجيا",
+    generateSuggestionsButton: "إنشاء اقتراحات",
+    promptEnhancerResultsTitle: "الأوامر المحسّنة",
+    enhancementSuggestions: "إليك بعض النسخ المحسّنة من أمرك:",
+    usePromptButton: "استخدم هذا الأمر",
     // Analytics
     analyticsScreenTitle: "التحليلات",
     analyticsScreenSubtitle: "تتبع استخدامك لأدوات الذكاء الاصطناعي وأداء المحتوى.",

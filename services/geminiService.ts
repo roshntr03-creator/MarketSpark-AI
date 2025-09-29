@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { supabase } from '../lib/supabaseClient';
-import type { Campaign, SocialPost, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool } from '../types/index';
+import type { Campaign, SocialPost, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool, PromptSuggestion } from '../types/index';
 
 // A generic function to handle Supabase function invocation and error handling.
 const invokeFunction = async <T>(functionName: string, body: object): Promise<T> => {
@@ -68,4 +68,8 @@ export const generateMarketingTipForTool = (tool: Tool, lang: 'en' | 'ar'): Prom
 
 export const generateDashboardSuggestions = (lastCreationSummary: any, lang: 'en' | 'ar'): Promise<DashboardSuggestion[]> => {
     return invokeFunction('generate-dashboard-suggestions', { lastCreation: lastCreationSummary, lang });
+};
+
+export const enhancePrompt = (prompt: string, context: string, lang: 'en' | 'ar'): Promise<PromptSuggestion[]> => {
+    return invokeFunction('enhance-prompt', { prompt, context, lang });
 };

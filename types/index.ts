@@ -15,7 +15,8 @@ export type Tool =
   | 'content-repurposing'
   | 'content-strategist'
   | 'asset-kit-generator'
-  | 'workflow';
+  | 'workflow'
+  | 'prompt-enhancer';
 
 export interface Source {
   uri: string;
@@ -131,13 +132,18 @@ export interface WorkflowResult {
   images: GeneratedImageWithPost[];
 }
 
+export interface PromptSuggestion {
+  promptText: string;
+  targetTool: Tool;
+}
+
 export interface DashboardSuggestion {
   title: string;
   tool: Tool;
   promptData?: string;
 }
 
-export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | WorkflowResult;
+export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | WorkflowResult | PromptSuggestion[];
 
 export interface CreationHistoryItem {
   id: string; // Corresponds to the database primary key

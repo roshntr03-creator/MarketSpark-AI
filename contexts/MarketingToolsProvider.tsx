@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, WorkflowResult } from '../types/index';
+import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, WorkflowResult, PromptSuggestion } from '../types/index';
 
 interface ResultWithCreation<T> {
     result: T;
@@ -44,6 +44,9 @@ interface MarketingToolsContextType {
     workflowResult: ResultWithCreation<WorkflowResult> | null;
     setWorkflowResult: (result: ResultWithCreation<WorkflowResult> | null) => void;
 
+    promptEnhancerResult: ResultWithCreation<PromptSuggestion[]> | null;
+    setPromptEnhancerResult: (result: ResultWithCreation<PromptSuggestion[]> | null) => void;
+
     initialSocialPostTopic: string | null;
     setInitialSocialPostTopic: (topic: string | null) => void;
 
@@ -52,6 +55,9 @@ interface MarketingToolsContextType {
 
     initialImageForEditor: EditedImage | null;
     setInitialImageForEditor: (image: EditedImage | null) => void;
+
+    initialCampaignData: { name: string; description: string } | null;
+    setInitialCampaignData: (data: { name: string; description: string } | null) => void;
 }
 
 const MarketingToolsContext = createContext<MarketingToolsContextType | undefined>(undefined);
@@ -68,10 +74,13 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const [contentStrategyResult, setContentStrategyResult] = useState<ResultWithCreation<ContentStrategy> | null>(null);
     const [assetKitResult, setAssetKitResult] = useState<ResultWithCreation<AssetKit> | null>(null);
     const [workflowResult, setWorkflowResult] = useState<ResultWithCreation<WorkflowResult> | null>(null);
+    const [promptEnhancerResult, setPromptEnhancerResult] = useState<ResultWithCreation<PromptSuggestion[]> | null>(null);
 
     const [initialSocialPostTopic, setInitialSocialPostTopic] = useState<string | null>(null);
     const [initialImageGeneratorPrompt, setInitialImageGeneratorPrompt] = useState<string | null>(null);
     const [initialImageForEditor, setInitialImageForEditor] = useState<EditedImage | null>(null);
+    const [initialCampaignData, setInitialCampaignData] = useState<{ name: string; description: string } | null>(null);
+
 
     const value = {
         activeTool, setActiveTool,
@@ -85,9 +94,11 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
         contentStrategyResult, setContentStrategyResult,
         assetKitResult, setAssetKitResult,
         workflowResult, setWorkflowResult,
+        promptEnhancerResult, setPromptEnhancerResult,
         initialSocialPostTopic, setInitialSocialPostTopic,
         initialImageGeneratorPrompt, setInitialImageGeneratorPrompt,
         initialImageForEditor, setInitialImageForEditor,
+        initialCampaignData, setInitialCampaignData,
     };
 
     return (

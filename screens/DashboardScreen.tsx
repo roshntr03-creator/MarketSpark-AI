@@ -60,6 +60,7 @@ const createCreationSummary = (item: CreationHistoryItem) => {
 
 
 const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, className }) => {
+    // FIX: Add 'prompt-enhancer' to the icon map to match the 'Tool' type.
     const iconMap: Record<Tool, React.ElementType> = {
         'campaign-generator': SparklesIcon,
         'social-post-assistant': ChatBubbleLeftRightIcon,
@@ -71,6 +72,7 @@ const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, classNam
         'content-strategist': LightBulbIcon,
         'asset-kit-generator': SwatchIcon,
         'workflow': WorkflowIcon,
+        'prompt-enhancer': SparklesIcon,
     };
     const Icon = iconMap[tool] || SparklesIcon;
     return <Icon className={className} />;

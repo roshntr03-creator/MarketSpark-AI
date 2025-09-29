@@ -30,6 +30,8 @@ import AssetKitGeneratorScreen from './AssetKitGeneratorScreen';
 import AssetKitResultsScreen from '../components/AssetKitResultsScreen';
 import WorkflowsScreen from './WorkflowsScreen';
 import WorkflowResultsScreen from '../components/WorkflowResultsScreen';
+import PromptEnhancerScreen from './PromptEnhancerScreen';
+import PromptEnhancerResultsScreen from '../components/PromptEnhancerResultsScreen';
 
 
 interface ToolsScreenProps {
@@ -41,11 +43,13 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
     const { 
         activeTool, setActiveTool, 
         campaignResult, socialPostsResult, imageEditResult, generatedImageResult, videoGenerationResult,
-        competitorAnalysisResult, contentRepurposingResult, contentStrategyResult, assetKitResult, workflowResult
+        competitorAnalysisResult, contentRepurposingResult, contentStrategyResult, assetKitResult, workflowResult,
+        promptEnhancerResult
     } = useMarketingTools();
 
     const tools: { id: Tool; title: string; description: string; Icon: React.ElementType; disabled?: boolean }[] = [
         { id: 'workflow', title: t.workflow, description: t.workflowDesc, Icon: WorkflowIcon },
+        { id: 'prompt-enhancer', title: t.promptEnhancer, description: t.promptEnhancerDesc, Icon: SparklesIcon },
         { id: 'campaign-generator', title: t.campaignGenerator, description: t.campaignGeneratorDesc, Icon: SparklesIcon },
         { id: 'social-post-assistant', title: t.socialPostAssistant, description: t.socialPostAssistantDesc, Icon: ChatBubbleLeftRightIcon },
         { id: 'image-generator', title: t.imageGenerator, description: t.imageGeneratorDesc, Icon: PhotoIcon },
@@ -79,6 +83,8 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
                 return assetKitResult ? <AssetKitResultsScreen /> : <AssetKitGeneratorScreen />;
             case 'workflow':
                 return workflowResult ? <WorkflowResultsScreen setActiveScreen={setActiveScreen} /> : <WorkflowsScreen />;
+            case 'prompt-enhancer':
+                return promptEnhancerResult ? <PromptEnhancerResultsScreen /> : <PromptEnhancerScreen />;
             default:
                 return null;
         }
