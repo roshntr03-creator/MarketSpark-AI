@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 // deno-lint-ignore-file
+// FIX: Add type declaration for the Deno global to resolve TypeScript errors.
+declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ai } from '../_shared/gemini.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import process from "https://deno.land/std@0.168.0/node/process.ts";
 import { encode } from "https://deno.land/std@0.204.0/encoding/base64.ts";
 
 serve(async (req) => {
@@ -20,7 +21,7 @@ serve(async (req) => {
         const updatedOperation = await ai.operations.getVideosOperation({ operation });
 
         if (updatedOperation.done && updatedOperation.response?.generatedVideos?.[0]?.video?.uri) {
-            const apiKey = process.env.API_KEY;
+            const apiKey = Deno.env.get("API_KEY");
             if (!apiKey) {
                 throw new Error("API_KEY environment variable not set on server.");
             }
