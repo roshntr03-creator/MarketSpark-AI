@@ -47,7 +47,7 @@ const VideoLoadingScreen: React.FC = () => {
 };
 
 const VideoGeneratorScreen: React.FC = () => {
-    const { t } = useTranslations();
+    const { t, lang } = useTranslations();
     const { setVideoGenerationResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
@@ -119,7 +119,7 @@ const VideoGeneratorScreen: React.FC = () => {
                 const base64 = await fileToBase64(imageFile);
                 imagePayload = { base64, mimeType: imageFile.type };
             }
-            const initialOp = await startVideoGeneration(prompt, imagePayload, brandPersona);
+            const initialOp = await startVideoGeneration(prompt, imagePayload, brandPersona, lang);
             setOperation(initialOp);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');

@@ -34,8 +34,8 @@ export const generateImage = (prompt: string, brandPersona: string): Promise<{ i
     return invokeFunction('generate-image', { prompt, brandPersona });
 };
 
-export const startVideoGeneration = (prompt: string, image: { base64: string, mimeType: string } | undefined, brandPersona: string): Promise<any> => {
-    return invokeFunction('start-video-generation', { prompt, image, brandPersona });
+export const startVideoGeneration = (prompt: string, image: { base64: string, mimeType: string } | undefined, brandPersona: string, lang: 'en' | 'ar'): Promise<any> => {
+    return invokeFunction('start-video-generation', { prompt, image, brandPersona, lang });
 };
 
 export const checkVideoGenerationStatus = (operation: any): Promise<any> => {

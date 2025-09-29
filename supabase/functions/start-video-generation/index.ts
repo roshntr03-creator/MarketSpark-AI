@@ -13,9 +13,12 @@ serve(async (req) => {
     }
 
     try {
-        const { prompt, image, brandPersona } = await req.json();
+        const { prompt, image, brandPersona, lang } = await req.json();
 
-        const fullPrompt = `Generate a short video based on the following prompt: "${prompt}". The video MUST include a suitable soundtrack that matches the mood of the video. The video should also align with our brand persona: "${brandPersona}".`;
+        // Restructured prompt to make audio a primary requirement.
+        const fullPrompt = lang === 'ar'
+            ? `أنشئ فيديو ترويجي قصير. الموضوع الأساسي هو: "${prompt}". يجب أن يحتوي الفيديو على مسار صوتي مسموع وعالي الجودة مع موسيقى خلفية تناسب الحالة المزاجية. يجب أن يتوافق النمط المرئي مع شخصية علامتنا التجارية: "${brandPersona}".`
+            : `Generate a short promotional video. The core subject is: "${prompt}". The video must have a high-quality, audible soundtrack with background music that fits the mood. The visual style should align with our brand persona: "${brandPersona}".`;
 
         let imagePayload;
         if (image) {
