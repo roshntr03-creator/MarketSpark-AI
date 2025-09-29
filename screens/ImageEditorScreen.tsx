@@ -26,7 +26,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 const ImageEditorScreen: React.FC = () => {
     const { t, lang } = useTranslations();
-    const { setImageEditResult, setActiveTool } = useMarketingTools();
+    const { setImageEditResult, setActiveTool, initialImageForEditor, setInitialImageForEditor } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
@@ -37,6 +37,32 @@ const ImageEditorScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [clearUploader, setClearUploader] = useState(0);
+
+    const suggestions = [
+        t.suggestionRemoveBg,
+        t.suggestionBw,
+        t.suggestionVintage,
+        t.suggestionBeachBg,
+    ];
+
+    useEffect(() => {
+        const dataUrlToFile = async (dataUrl: string, fileName: string): Promise<File> => {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            return new File([blob], fileName, { type: blob.type });
+        };
+
+        if (initialImageForEditor) {
+            setImagePreview(initialImageForEditor.edited);
+            setPrompt(initialImageForEditor.prompt);
+            // Convert data URL back to a File object for `editImage` service
+            dataUrlToFile(initialImageForEditor.edited, `edited-image-${Date.now()}.png`)
+                .then(file => setImageFile(file));
+            // Clear the initial state to prevent re-triggering
+            setInitialImageForEditor(null);
+        }
+    }, [initialImageForEditor, setInitialImageForEditor]);
+
 
     useEffect(() => {
         if (!imageFile) {
@@ -83,6 +109,7 @@ const ImageEditorScreen: React.FC = () => {
     const handleClearImage = () => {
         setImageFile(null);
         setClearUploader(c => c + 1);
+        setPrompt('');
     };
     
     if (isLoading) return <LoadingScreen />;
@@ -111,16 +138,34 @@ const ImageEditorScreen: React.FC = () => {
                                     {t.clearImageButton}
                                 </button>
                             </div>
-                            <div className="space-y-4">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t.imagePromptLabel}</h2>
-                                <textarea
-                                    rows={6}
-                                    value={prompt}
-                                    onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder={t.imagePromptPlaceholder}
-                                    className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm"
-                                    required
-                                />
+                            <div className="space-y-6">
+                                <div>
+                                    <label htmlFor="prompt" className="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">{t.imagePromptLabel}</label>
+                                    <textarea
+                                        id="prompt"
+                                        rows={4}
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        placeholder={t.imagePromptPlaceholder}
+                                        className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">{t.promptSuggestions}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {suggestions.map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setPrompt(s)}
+                                                className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900 transition-colors"
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 <button
                                     type="submit"
                                     disabled={isLoading || !prompt}

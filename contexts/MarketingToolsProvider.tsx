@@ -49,6 +49,9 @@ interface MarketingToolsContextType {
 
     initialImageGeneratorPrompt: string | null;
     setInitialImageGeneratorPrompt: (prompt: string | null) => void;
+
+    initialImageForEditor: EditedImage | null;
+    setInitialImageForEditor: (image: EditedImage | null) => void;
 }
 
 const MarketingToolsContext = createContext<MarketingToolsContextType | undefined>(undefined);
@@ -68,6 +71,7 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     const [initialSocialPostTopic, setInitialSocialPostTopic] = useState<string | null>(null);
     const [initialImageGeneratorPrompt, setInitialImageGeneratorPrompt] = useState<string | null>(null);
+    const [initialImageForEditor, setInitialImageForEditor] = useState<EditedImage | null>(null);
 
     const value = {
         activeTool, setActiveTool,
@@ -83,6 +87,7 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
         workflowResult, setWorkflowResult,
         initialSocialPostTopic, setInitialSocialPostTopic,
         initialImageGeneratorPrompt, setInitialImageGeneratorPrompt,
+        initialImageForEditor, setInitialImageForEditor,
     };
 
     return (
