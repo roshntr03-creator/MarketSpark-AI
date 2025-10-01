@@ -215,3 +215,9 @@ export const FaceSmileIcon: React.FC<IconProps> = (props) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 9.75h.008v.008H9V9.75zm6 0h.008v.008H15V9.75z" />
   </svg>
 );
+
+export const SoundWaveIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" {...commonProps} {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V16.5M12 4.5V19.5M15.75 7.5V16.5M4.5 12H19.5" />
+  </svg>
+);

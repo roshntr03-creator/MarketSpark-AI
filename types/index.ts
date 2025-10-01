@@ -158,7 +158,8 @@ export interface VirtualAmbassador {
     name: string;
     backstory: string;
     communicationStyle: string;
-    faceImageUrl: string;
+    voiceDescription: string;
+    bodyImageUrl: string;
     coreDescription: string;
 }
 

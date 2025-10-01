@@ -16,8 +16,8 @@ serve(async (req) => {
     const { description, brandPersona, lang } = await req.json();
 
     const prompt = lang === 'ar'
-        ? `صورة وجه واقعية عالية الجودة لسفير علامة تجارية افتراضي تم وصفه بأنه: "${description}". يجب أن تكون الصورة أمامية، بإضاءة احترافية، وخلفية محايدة. يجب أن يعكس الوجه شخصية العلامة التجارية: "${brandPersona}".`
-        : `A high-quality, photorealistic headshot of a virtual brand ambassador described as: "${description}". The portrait should be front-facing, with professional studio lighting and a neutral background. The face should reflect the brand persona: "${brandPersona}".`;
+        ? `صورة واقعية عالية الجودة لكامل الجسم لسفير علامة تجارية افتراضي تم وصفه بأنه: "${description}". يجب أن يكون الشخص واقفًا في استوديو بسيط ومضاء جيدًا بخلفية رمادية محايدة. يجب أن ينظر مباشرة إلى الكاميرا بتعبير واثق وودود. يجب أن تكون ملابسه عصرية وأنيقة ولكنها بسيطة وغير مشتتة. يجب أن يعكس المظهر العام شخصية العلامة التجارية: "${brandPersona}".`
+        : `A high-quality, photorealistic, full-body portrait of a virtual brand ambassador described as: "${description}". The person should be standing in a well-lit, minimalist studio with a neutral grey background. They should be looking directly at the camera with a confident and friendly expression. Their clothing should be modern, stylish, yet simple and not distracting. The overall look should reflect the brand persona: "${brandPersona}".`;
 
     const response = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
@@ -25,7 +25,7 @@ serve(async (req) => {
         config: {
             numberOfImages: 4,
             outputMimeType: 'image/png',
-            aspectRatio: '1:1',
+            aspectRatio: '9:16',
         }
     });
     

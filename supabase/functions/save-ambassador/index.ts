@@ -42,12 +42,12 @@ serve(async (req) => {
     }
 
     const { ambassadorData } = await req.json();
-    const { faceImageBase64, ...profileData } = ambassadorData;
+    const { bodyImageBase64, ...profileData } = ambassadorData;
 
     const supabaseAdmin = getSupabaseAdminClient();
 
     // 1. Upload image to storage
-    const imageBuffer = decode(faceImageBase64);
+    const imageBuffer = decode(bodyImageBase64);
     const filePath = `${user.id}/ambassador_${Date.now()}.png`;
     
     const { error: uploadError } = await supabaseAdmin.storage
@@ -68,9 +68,13 @@ serve(async (req) => {
       
     // 3. Insert ambassador data into the database
     const finalAmbassadorData = {
-        ...profileData,
+        name: profileData.name,
+        backstory: profileData.backstory,
+        communication_style: profileData.communicationStyle,
+        voice_description: profileData.voiceDescription,
+        core_description: profileData.coreDescription,
         user_id: user.id,
-        face_image_url: publicUrl,
+        body_image_url: publicUrl,
     };
       
     const { data: dbData, error: dbError } = await supabaseAdmin
@@ -88,7 +92,8 @@ serve(async (req) => {
         name: dbData.name,
         backstory: dbData.backstory,
         communicationStyle: dbData.communication_style,
-        faceImageUrl: dbData.face_image_url,
+        voiceDescription: dbData.voice_description,
+        bodyImageUrl: dbData.body_image_url,
         coreDescription: dbData.core_description,
     };
 
