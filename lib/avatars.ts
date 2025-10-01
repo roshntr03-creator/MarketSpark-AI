@@ -51,13 +51,20 @@ const rawBase64Strings: { [key: string]: string } = {
     avatar4: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAwQFAgABBgf/xAAoEAACAQMDAwQCAwAAAAAAAAABAgMABBEFEiExExQiQWEjMmGBFEb/xAAXAQEBAQEAAAAAAAAAAAAAAAABAgAD/8QAHBEBAQEAAgMBAAAAAAAAAAAAAAERAhIhIDFh/9oADAMBAAIRAxEAPwDo9K8ooDyiiigKKKKA8rN671N9MtUkhRXmlbYrHO0eScf2K0leUUDaW9/qF08moXTzSOfmdj9ABwBS2a4niO6KV1HII4x8g1oKKmViK5lZizMSTySTzS6inFZK8oooIqKKKApfRRQFFFFAf/9k=',
 };
 
+function sanitizeBase64(raw: string): string {
+    // Remove any characters that are not part of the Base64 standard
+    let cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, "");
+    // Ensure correct padding
+    const mod = cleaned.length % 4;
+    if (mod) {
+        cleaned += "=".repeat(4 - mod);
+    }
+    return cleaned;
+}
+
 export const avatars: Avatar[] = avatarData.map(avatar => {
     const rawString = rawBase64Strings[avatar.id] || '';
-    // THOROUGH CLEANING: The base64 strings might contain hidden characters
-    // or newlines from being copied/pasted. This regex removes *everything* that
-    // is not a valid base64 character (A-Z, a-z, 0-9, +, /, =) to prevent
-    // 'ERR_INVALID_URL' in the browser and 'Unable to process input image' from the Gemini API.
-    const cleanedBase64 = rawString.replace(/[^A-Za-z0-9+/=]/g, '');
+    const cleanedBase64 = sanitizeBase64(rawString);
     return {
         ...avatar,
         base64: cleanedBase64,

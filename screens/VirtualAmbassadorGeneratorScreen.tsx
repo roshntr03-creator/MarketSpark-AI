@@ -215,6 +215,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                                     role="button"
                                     aria-pressed={selectedAvatarIndex === index}
                                     tabIndex={0}
+                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedAvatarIndex(index)}
                                 >
                                     <img
                                         src={avatar.dataUri}

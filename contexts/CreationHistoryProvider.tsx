@@ -65,62 +65,73 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
         throw new Error("Cannot add creation: no user is signed in.");
     }
     
-    // This is the object that will be returned for immediate use in the UI, with the full result.
+    // Use a more unique temporary ID for optimistic updates
+    const tempId = `temp_${Date.now()}`;
     const newCreation: CreationHistoryItem = {
-      id: `${Date.now()}`, // Temporary ID
+      id: tempId,
       user_id: user.id,
       tool,
       timestamp: Date.now(),
       result,
     };
     
-    // Create a deep copy for storage to avoid modifying the object returned to the UI.
-    const creationToStore: CreationHistoryItem = JSON.parse(JSON.stringify(newCreation));
-    
-    const timestampString = new Date(creationToStore.timestamp).toLocaleString();
-
-    // To save storage space and avoid very large JSON objects in the DB,
-    // we replace large base64 data with placeholder strings.
-    if (tool === 'video-generator' || tool === 'virtual-ambassador-generator') {
-        (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
-    } else if (tool === 'image-generator') {
-        (creationToStore.result as GeneratedImage).image = `Image generated on ${timestampString}`;
-    } else if (tool === 'image-editor') {
-        const editedImageResult = creationToStore.result as EditedImage;
-        editedImageResult.original = `Original image from ${timestampString}`;
-        editedImageResult.edited = `Edited image from ${timestampString}`;
-    } else if (tool === 'workflow') {
-        const workflowResult = creationToStore.result as WorkflowResult;
-        if ('images' in workflowResult && Array.isArray(workflowResult.images)) {
-             (workflowResult as NewProductLaunchWorkflowResult).images.forEach((img) => {
-                img.image = `Image for post generated on ${timestampString}`;
-            });
-        } else if ('carouselImages' in workflowResult && Array.isArray(workflowResult.carouselImages)) {
-             (workflowResult as BlogPostRepurposingWorkflowResult).carouselImages.forEach((img) => {
-                img.image = `Image for post generated on ${timestampString}`;
-            });
-        }
-    }
-    
+    // Optimistically update the UI
     setHistory(prevHistory => [newCreation, ...prevHistory].slice(0, MAX_HISTORY_ITEMS));
 
-    // Asynchronously insert the storage-safe version into the database.
-    const insertToDB = async () => {
+    // Asynchronously insert into DB and then sync the real ID back to the UI state
+    const syncWithDb = async () => {
+        // Create a deep, sanitized copy for storage to avoid modifying the object returned to the UI.
+        const creationToStore = JSON.parse(JSON.stringify(newCreation));
+        const timestampString = new Date(creationToStore.timestamp).toLocaleString();
+
+        // To save storage space and avoid very large JSON objects in the DB,
+        // we replace large base64 data with placeholder strings.
+        if (tool === 'video-generator' || tool === 'virtual-ambassador-generator') {
+            (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
+        } else if (tool === 'image-generator') {
+            (creationToStore.result as GeneratedImage).image = `Image generated on ${timestampString}`;
+        } else if (tool === 'image-editor') {
+            const editedImageResult = creationToStore.result as EditedImage;
+            editedImageResult.original = `Original image from ${timestampString}`;
+            editedImageResult.edited = `Edited image from ${timestampString}`;
+        } else if (tool === 'workflow') {
+            const workflowResult = creationToStore.result as WorkflowResult;
+            if ('images' in workflowResult && Array.isArray(workflowResult.images)) {
+                 (workflowResult as NewProductLaunchWorkflowResult).images.forEach((img) => {
+                    img.image = `Image for post generated on ${timestampString}`;
+                });
+            } else if ('carouselImages' in workflowResult && Array.isArray(workflowResult.carouselImages)) {
+                 (workflowResult as BlogPostRepurposingWorkflowResult).carouselImages.forEach((img) => {
+                    img.image = `Image for post generated on ${timestampString}`;
+                });
+            }
+        }
+    
         try {
-            const { error } = await supabase.from('creations').insert({
+            const { data, error } = await supabase.from('creations').insert({
                 user_id: creationToStore.user_id,
                 tool: creationToStore.tool,
                 result: creationToStore.result,
-            });
+            }).select('id').single();
+
             if (error) throw error;
+            
+            // Post-insert: Update the temporary item in state with the real ID from the DB
+            if (data) {
+                setHistory(prev => prev.map(item =>
+                    item.id === tempId ? { ...item, id: data.id } : item
+                ));
+            }
         } catch(error) {
             console.error("Failed to save creation to database:", error);
-            // Optional: implement logic to revert the optimistic update
+            // On failure, revert the optimistic update
+            setHistory(prev => prev.filter(item => item.id !== tempId));
         }
     };
-    insertToDB();
+    
+    syncWithDb();
 
-    // Return the original, unmodified creation item for immediate use in the results screen.
+    // Return the item with the temporary ID for immediate use in the UI
     return newCreation;
   }, [user]);
 

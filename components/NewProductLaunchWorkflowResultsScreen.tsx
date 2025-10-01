@@ -35,7 +35,8 @@ const NewProductLaunchWorkflowResultsScreen: React.FC<NewProductLaunchWorkflowRe
             scheduledDate.setHours(10, 0, 0, 0); // Default to 10:00 AM
 
             addPlannerItem({
-                scheduledDateTime: scheduledDate.toISOString(),
+                // FIX: Corrected property name from 'scheduledDateTime' to 'scheduled_date_time' to match the PlannerItem type.
+                scheduled_date_time: scheduledDate.toISOString(),
                 title: `${campaign.campaign.productName} - Social Post`,
                 platform: post.platform,
                 contentIdea: post.content,
