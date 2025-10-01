@@ -35,7 +35,7 @@ const avatarData: Omit<Avatar, 'dataUri'>[] = [
         id: 'avatar3',
         description: 'A trustworthy-looking woman in her 40s with blonde hair, wearing a blazer, standing in a clean, minimalist studio',
         description_ar: 'امرأة تبدو جديرة بالثقة في الأربعينات من عمرها بشعر أشقر، ترتدي سترة رسمية، وتقف في استوديو بسيط ونظيف',
-        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAMCBAAFBgf/xAApEAABAgUEAgIDAQEAAAAAAAABAgMABBEFEiETIjFRYQZBYnETI0KB/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAIBBAP/xAAdEQACAgMAAwEAAAAAAAAAAAAAAQIREiExEEFR/9oADAMBAAIRAxEAPwDqUqYl2XU81xDaE6qUcAVjJ2/Il1Fpl8OrOymwVE/Olc4rLzE2uZc2lQ+GlRAQP0nn7k1FhP2iRzH6r6H067fllwSssy5SAcJUskq9wAOPuajzO1J8K+3KyyFtnVKnVkKHwADj5J+I4eUqUtS1qKlKOSTqTUe0RZnP6q10/sUvO2ZltWJebmB5s7KmwEkfIIJ/cVGm9qL7r2ZdgsNtnZDjhUofAAx8k/FYa+tXtEmcyH5t9DrdOzpZalBLcw4VFRShJSlWvU7j35rNzW2ZpxuKzLqQdlSU4T9yTSooEV1bMzk/wC20aM1MTCFO2+blR5K3QkZlSglIA3OgG1c0gKCAoD0k9xUqS/3EshW7Y8Kvof080LqVlK0KCkKGQRqD5piiEwIoooB//Z',
+        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAMCBAAFBgf/xAApEAABAgUEAgIDAQEAAAAAAAABAgMABBEFEiETIjFRYQZBYnETI0KB/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAIBBAP/xAAdEQACAgMAAwEAAAAAAAAAAAAAAQIREiExEEFR/9oADAMBAAIRAD8A6UqYl2XU81xDaE6qUcAVjJ2/Il1Fpl8OrOymwVE/Olc4rLzE2uZc2lQ+GlRAQP0nn7k1FhP2iRzH6r6H067fllwSssy5SAcJUskq9wAOPuajzO1J8K+3KyyFtnVKnVkKHwADj5J+I4eUqUtS1qKlKOSTqTUe0RZnP6q10/sUvO2ZltWJebmB5s7KmwEkfIIJ/cVGm9qL7r2ZdgsNtnZDjhUofAAx8k/FYa+tXtEmcyH5t9DrdOzpZalBLcw4VFRShJSlWvU7j35rNzW2ZpxuKzLqQdlSU4T9yTSooEV1bMzk/wC20aM1MTCFO2+blR5K3QkZlSglIA3OgG1c0gKCAoD0k9xUqS/3EshW7Y8Kvof080LqVlK0KCkKGQRqD5piiEwIoooB//Z',
         mimeType: 'image/jpeg',
     },
     {
@@ -47,7 +47,12 @@ const avatarData: Omit<Avatar, 'dataUri'>[] = [
     }
 ];
 
-export const avatars: Avatar[] = avatarData.map(avatar => ({
-    ...avatar,
-    dataUri: `data:${avatar.mimeType};base64,${avatar.base64}`
-}));
+export const avatars: Avatar[] = avatarData.map(avatar => {
+    // Remove all non-base64 characters (whitespace, newlines, etc.)
+    const cleanedBase64 = avatar.base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    return {
+        ...avatar,
+        base64: cleanedBase64,
+        dataUri: `data:${avatar.mimeType};base64,${cleanedBase64}`
+    };
+});
