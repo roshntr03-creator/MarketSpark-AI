@@ -89,6 +89,10 @@ const VideoGeneratorScreen: React.FC = () => {
             timeoutId = setTimeout(() => poll(operation), 10000); // Poll every 10 seconds
         } else if (operation && operation.done) {
             setIsPolling(false);
+            if (operation.error) {
+                setError(`Video generation failed: ${operation.error.message}`);
+                return;
+            }
             if (operation.response?.generatedVideos?.[0]?.video?.uri) {
                 const resultPayload: GeneratedVideo = {
                     videoUri: operation.response.generatedVideos[0].video.uri,

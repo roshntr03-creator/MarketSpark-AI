@@ -24,6 +24,14 @@ serve(async (req) => {
         const { operation } = await req.json();
 
         const updatedOperation = await ai.operations.getVideosOperation({ operation });
+        
+        // If the Gemini operation finished with an error, return it to the client to handle.
+        if (updatedOperation.done && updatedOperation.error) {
+            return new Response(JSON.stringify(updatedOperation), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+            });
+        }
 
         // If the video is ready, download it from Google, upload it to Supabase Storage,
         // and replace the temporary Google URI with a permanent public Supabase URL.
@@ -59,16 +67,16 @@ serve(async (req) => {
             }
 
             // Get the public URL for the newly uploaded file
-            const { data: { publicUrl } } = supabaseAdmin.storage
+            const { data: publicUrlData } = supabaseAdmin.storage
               .from('generated_creations')
               .getPublicUrl(filePath);
 
-            if (!publicUrl) {
+            if (!publicUrlData || !publicUrlData.publicUrl) {
                 throw new Error("Could not get public URL for the uploaded video.");
             }
 
             // Replace the URI in the operation object with the public Supabase URL
-            updatedOperation.response.generatedVideos[0].video.uri = publicUrl;
+            updatedOperation.response.generatedVideos[0].video.uri = publicUrlData.publicUrl;
         }
 
         return new Response(JSON.stringify(updatedOperation), {
