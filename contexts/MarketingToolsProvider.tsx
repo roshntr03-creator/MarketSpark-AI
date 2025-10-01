@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, WorkflowResult, PromptSuggestion } from '../types/index';
+import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult, PromptSuggestion } from '../types/index';
 
 interface ResultWithCreation<T> {
     result: T;
@@ -41,8 +41,8 @@ interface MarketingToolsContextType {
     assetKitResult: ResultWithCreation<AssetKit> | null;
     setAssetKitResult: (result: ResultWithCreation<AssetKit> | null) => void;
 
-    workflowResult: ResultWithCreation<WorkflowResult> | null;
-    setWorkflowResult: (result: ResultWithCreation<WorkflowResult> | null) => void;
+    workflowResult: ResultWithCreation<NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult> | null;
+    setWorkflowResult: (result: ResultWithCreation<NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult> | null) => void;
 
     promptEnhancerResult: ResultWithCreation<PromptSuggestion[]> | null;
     setPromptEnhancerResult: (result: ResultWithCreation<PromptSuggestion[]> | null) => void;
@@ -73,7 +73,7 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const [contentRepurposingResult, setContentRepurposingResult] = useState<ResultWithCreation<ContentRepurposingResult> | null>(null);
     const [contentStrategyResult, setContentStrategyResult] = useState<ResultWithCreation<ContentStrategy> | null>(null);
     const [assetKitResult, setAssetKitResult] = useState<ResultWithCreation<AssetKit> | null>(null);
-    const [workflowResult, setWorkflowResult] = useState<ResultWithCreation<WorkflowResult> | null>(null);
+    const [workflowResult, setWorkflowResult] = useState<ResultWithCreation<NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult> | null>(null);
     const [promptEnhancerResult, setPromptEnhancerResult] = useState<ResultWithCreation<PromptSuggestion[]> | null>(null);
 
     const [initialSocialPostTopic, setInitialSocialPostTopic] = useState<string | null>(null);

@@ -29,7 +29,8 @@ import ContentStrategyResultsScreen from '../components/ContentStrategyResultsSc
 import AssetKitGeneratorScreen from './AssetKitGeneratorScreen';
 import AssetKitResultsScreen from '../components/AssetKitResultsScreen';
 import WorkflowsScreen from './WorkflowsScreen';
-import WorkflowResultsScreen from '../components/WorkflowResultsScreen';
+import NewProductLaunchWorkflowResultsScreen from '../components/NewProductLaunchWorkflowResultsScreen';
+import BlogPostRepurposingWorkflowResultsScreen from '../components/BlogPostRepurposingWorkflowResultsScreen';
 import PromptEnhancerScreen from './PromptEnhancerScreen';
 import PromptEnhancerResultsScreen from '../components/PromptEnhancerResultsScreen';
 
@@ -82,7 +83,15 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
             case 'asset-kit-generator':
                 return assetKitResult ? <AssetKitResultsScreen /> : <AssetKitGeneratorScreen />;
             case 'workflow':
-                return workflowResult ? <WorkflowResultsScreen setActiveScreen={setActiveScreen} /> : <WorkflowsScreen />;
+                 if (workflowResult) {
+                    if ('campaign' in workflowResult.result) { // NewProductLaunchWorkflowResult
+                        return <NewProductLaunchWorkflowResultsScreen setActiveScreen={setActiveScreen} />;
+                    }
+                    if ('repurposedContent' in workflowResult.result) { // BlogPostRepurposingWorkflowResult
+                        return <BlogPostRepurposingWorkflowResultsScreen setActiveScreen={setActiveScreen} />;
+                    }
+                }
+                return <WorkflowsScreen />;
             case 'prompt-enhancer':
                 return promptEnhancerResult ? <PromptEnhancerResultsScreen /> : <PromptEnhancerScreen />;
             default:

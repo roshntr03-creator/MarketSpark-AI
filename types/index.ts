@@ -126,11 +126,19 @@ export interface AssetKit {
     imageStyles: string[];
 }
 
-export interface WorkflowResult {
+export interface NewProductLaunchWorkflowResult {
   campaign: Campaign;
   socialPosts: SocialPost[];
   images: GeneratedImageWithPost[];
 }
+
+export interface BlogPostRepurposingWorkflowResult {
+    repurposedContent: ContentRepurposingResult;
+    carouselImages: GeneratedImage[];
+}
+
+// FIX: Add WorkflowResult type as a union of the two specific workflow result types to resolve import errors.
+export type WorkflowResult = NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult;
 
 export interface PromptSuggestion {
   promptText: string;
@@ -143,7 +151,7 @@ export interface DashboardSuggestion {
   promptData?: string;
 }
 
-export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | WorkflowResult | PromptSuggestion[];
+export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult | PromptSuggestion[];
 
 export interface CreationHistoryItem {
   id: string; // Corresponds to the database primary key
