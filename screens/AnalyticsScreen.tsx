@@ -17,9 +17,9 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // FIX: Provide a default value of 0 for `count` as it can be undefined.
+    // FIX: The `count` from `rawStats` can be undefined. Defaulting to 0 ensures the reduce operation works correctly.
     const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (count || 0), 0);
-    // FIX: Provide a default value of 0 for `a` and `b` to prevent arithmetic operations on undefined values.
+    // FIX: The values `a` and `b` from `rawStats` can be undefined. Defaulting to 0 prevents a runtime error during the sort comparison.
     const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0));
 
     const maxActivity = Math.max(...recentActivity.map(a => a.value), 0) || 1;
@@ -46,7 +46,8 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                                         <div 
                                             className="bg-indigo-500 h-2.5 rounded-full" 
-                                            // FIX: Provide default values for `count` (0) and `totalCreations` (1) to handle potential undefined values and prevent division by zero.
+                                            // FIX: `count` can be undefined and `totalCreations` can be 0.
+                                            // Defaulting `count` to 0 and `totalCreations` to 1 (to prevent division by zero) fixes potential errors.
                                             style={{ width: `${((count || 0) / (totalCreations || 1)) * 100}%` }}
                                         ></div>
                                     </div>

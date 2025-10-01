@@ -245,7 +245,7 @@ const MarketingTip: React.FC = () => {
 
     const mostUsedTool = useMemo(() => {
         if (Object.keys(rawStats).length === 0) return null;
-        // FIX: Provide a default value of 0 for `a` and `b` to prevent arithmetic operations on undefined values.
+        // FIX: The values `a` and `b` from `rawStats` can be undefined. Defaulting to 0 prevents a runtime error during the sort comparison.
         return Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0))[0][0] as Tool;
     }, [rawStats]);
 
