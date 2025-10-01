@@ -108,7 +108,13 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         setError(null);
 
         const selectedAvatar = avatars[selectedAvatarIndex];
-        const fullPrompt = `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${selectedAvatar.description}. They are speaking directly to the camera in a ${background}. Their tone is ${voiceStyle}. They are saying the following script: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${lang === 'ar' ? 'Arabic' : 'English'}.`;
+        const avatarDescription = lang === 'ar' ? selectedAvatar.description_ar : selectedAvatar.description;
+        const audioLanguage = lang === 'ar' ? 'Arabic' : 'English';
+
+        const fullPrompt = lang === 'ar'
+            ? `أنشئ فيديو UGC رأسي بنسبة 9:16 يظهر شخصًا واقعيًا. الشخص هو: ${avatarDescription}. يتحدث مباشرة إلى الكاميرا في ${background}. نبرة صوته ${voiceStyle}. يقول النص التالي: "${script}". يجب أن يبدو الفيديو أصيلًا، كشخص حقيقي يشارك تجربته. يجب أن يكون الصوت كلامًا واضحًا وطبيعيًا باللغة العربية.`
+            : `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${avatarDescription}. They are speaking directly to the camera in a ${background}. Their tone is ${voiceStyle}. They are saying the following script: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${audioLanguage}.`;
+
 
         try {
             const imagePayload = {
