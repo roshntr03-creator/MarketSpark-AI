@@ -16,7 +16,7 @@ const VideoGeneratorResultsScreen: React.FC = () => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isScheduling, setIsScheduling] = useState(false);
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-    const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
+    const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [isLoadingVideo, setIsLoadingVideo] = useState(true);
     const [videoError, setVideoError] = useState<string | null>(null);
 
@@ -34,20 +34,22 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             return;
         }
 
-        let objectUrl: string | null = null;
-        const fetchVideo = async () => {
+        const processVideoUri = async () => {
             setIsLoadingVideo(true);
             setVideoError(null);
             try {
-                // The videoUri is a data URI, fetched and encoded by the backend.
-                const response = await fetch(videoUri);
-                if (!response.ok) {
-                    throw new Error(`Error fetching video: ${response.status} ${response.statusText}`);
+                // The backend now returns a data URI. We can use it directly for the src
+                // and fetch it to create a blob for the download functionality.
+                if (videoUri.startsWith('data:')) {
+                    setVideoSrc(videoUri); 
+                    
+                    const response = await fetch(videoUri);
+                    const blob = await response.blob();
+                    setVideoBlob(blob);
+                } else {
+                    // Fallback for unexpected formats, though it shouldn't happen
+                    throw new Error("Received an unexpected video URI format.");
                 }
-                const blob = await response.blob();
-                setVideoBlob(blob); // Save blob for download
-                objectUrl = URL.createObjectURL(blob);
-                setVideoBlobUrl(objectUrl);
             } catch (error) {
                 console.error("Failed to load video for playback:", error);
                 setVideoError(error instanceof Error ? error.message : "Could not load video.");
@@ -56,13 +58,8 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             }
         };
 
-        fetchVideo();
+        processVideoUri();
 
-        return () => {
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
-            }
-        };
     }, [videoUri]);
 
 
@@ -119,7 +116,7 @@ const VideoGeneratorResultsScreen: React.FC = () => {
                             </div>
                         ) : (
                             <video 
-                                src={videoBlobUrl || ''}
+                                src={videoSrc || ''}
                                 controls 
                                 playsInline
                                 className="w-full h-full"

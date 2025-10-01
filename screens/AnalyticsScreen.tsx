@@ -17,11 +17,9 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // FIX: The values from Object.values(rawStats) can be undefined or inferred as 'unknown'.
-    // Use a `typeof` check to ensure the reduce operation works correctly on numbers.
+    // Fix: Added a type check to ensure `count` is a number before adding it to the sum, resolving an error with applying '+' to 'unknown'.
     const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
-    // FIX: The values from Object.entries(rawStats) can be undefined or inferred as 'unknown',
-    // so we use a `typeof` check to ensure the sort function performs a valid numeric comparison.
+    // Fix: Added type checks to the sort comparator to safely handle potentially non-numeric values.
     const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0));
 
     const maxActivity = Math.max(...recentActivity.map(a => a.value), 0) || 1;
@@ -43,11 +41,10 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                                 <div key={tool}>
                                     <div className="flex justify-between items-center mb-1">
                                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t[kebabToCamel(tool) as keyof typeof t] || tool.replace(/-/g, ' ')}</p>
-                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</p>
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count as any}</p>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                        {/* FIX: The 'count' can be undefined or inferred as 'unknown'. Use a `typeof` check for the calculation. */}
-                                        {/* Also, guard against division by zero if totalCreations is 0. */}
+                                        {/* Fix: Added a type check to ensure `count` is a number before using it in division and guarded against division by zero. */}
                                         <div 
                                             className="bg-indigo-500 h-2.5 rounded-full" 
                                             style={{ width: `${(((typeof count === 'number' ? count : 0) / (totalCreations || 1)) * 100)}%` }}

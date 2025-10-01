@@ -119,7 +119,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         try {
             const imagePayload = {
                 base64: selectedAvatar.base64,
-                mimeType: 'image/png',
+                mimeType: selectedAvatar.mimeType,
             };
             const initialOp = await startVideoGeneration(fullPrompt, imagePayload, brandPersona, lang);
             setOperation(initialOp);
