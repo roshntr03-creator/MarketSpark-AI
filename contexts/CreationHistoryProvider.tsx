@@ -27,9 +27,9 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
         try {
           const { data, error } = await supabase
             .from('creations')
-            .select('*')
+            .select('id, user_id, tool, timestamp, result')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
+            .order('timestamp', { ascending: false })
             .limit(MAX_HISTORY_ITEMS);
 
           if (error) throw error;
@@ -38,13 +38,13 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
             id: item.id,
             user_id: item.user_id,
             tool: item.tool,
-            timestamp: new Date(item.created_at).getTime(),
+            timestamp: new Date(item.timestamp).getTime(),
             result: item.result,
           }));
 
           setHistory(mappedHistory);
         } catch (error) {
-          console.error("Error fetching creation history:", error instanceof Error ? error.message : String(error));
+          console.error("Error fetching creation history:", JSON.stringify(error, null, 2));
           setHistory([]);
         }
       } else {

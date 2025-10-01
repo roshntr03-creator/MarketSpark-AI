@@ -207,23 +207,21 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                                 <button
                                     key={avatar.id}
                                     onClick={() => setSelectedAvatarIndex(index)}
-                                    className={`group block w-full rounded-xl text-left transition-all duration-200 border-2 ${
+                                    className={`w-full text-left p-2 rounded-xl transition-all duration-200 border-2 bg-gray-100 dark:bg-gray-800 ${
                                         selectedAvatarIndex === index
                                             ? 'border-indigo-500'
-                                            : 'border-transparent hover:border-indigo-300'
+                                            : 'border-transparent hover:border-indigo-400/50'
                                     }`}
                                     aria-pressed={selectedAvatarIndex === index}
                                 >
-                                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                                        <img
-                                            src={avatar.dataUri}
-                                            alt={lang === 'ar' ? avatar.description_ar : avatar.description}
-                                            className="w-full rounded-md object-cover aspect-[3/4] group-hover:scale-105 transition-transform duration-300"
-                                        />
-                                        <p className="mt-2 text-xs text-center text-gray-600 dark:text-gray-400 h-12">
-                                            {lang === 'ar' ? avatar.description_ar : avatar.description}
-                                        </p>
-                                    </div>
+                                    <img
+                                        src={avatar.dataUri}
+                                        alt={lang === 'ar' ? avatar.description_ar : avatar.description}
+                                        className="w-full rounded-md object-cover aspect-[3/4]"
+                                    />
+                                    <p className="mt-2 text-xs text-center text-gray-600 dark:text-gray-400 h-12 overflow-hidden">
+                                        {lang === 'ar' ? avatar.description_ar : avatar.description}
+                                    </p>
                                 </button>
                             ))}
                         </div>
