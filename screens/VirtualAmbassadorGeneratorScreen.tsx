@@ -193,7 +193,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {avatars.map((avatar, index) => (
                                 <div key={avatar.id} onClick={() => setSelectedAvatarIndex(index)} className={`rounded-lg overflow-hidden cursor-pointer border-4 transition-all ${selectedAvatarIndex === index ? 'border-indigo-500 scale-105' : 'border-transparent hover:border-indigo-400'}`}>
-                                    <img src={avatar.dataUri} alt={avatar.description} className="w-full h-full object-cover" />
+                                    <img src={avatar.dataUri} alt={lang === 'ar' ? avatar.description_ar : avatar.description} className="w-full h-full object-cover" />
                                 </div>
                             ))}
                         </div>

@@ -17,8 +17,14 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // Fix: Added a type check to ensure `count` is a number before adding it to the sum, resolving an error with applying '+' to 'unknown'.
-    const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
+    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'.
+    // Rewritten to be more explicit for the TypeScript type checker.
+    const totalCreations = Object.values(rawStats).reduce((sum, count) => {
+        if (typeof count === 'number') {
+            return sum + count;
+        }
+        return sum;
+    }, 0);
     // Fix: Added type checks to the sort comparator to safely handle potentially non-numeric values.
     const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0));
 
@@ -37,21 +43,27 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                     <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl p-6">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t.toolUsage}</h2>
                         <div className="space-y-4">
-                            {sortedTools.length > 0 ? sortedTools.map(([tool, count]) => (
-                                <div key={tool}>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t[kebabToCamel(tool) as keyof typeof t] || tool.replace(/-/g, ' ')}</p>
-                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count as any}</p>
-                                    </div>
-                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                        {/* Fix: Added a type check to ensure `count` is a number before using it in division and guarded against division by zero. */}
-                                        <div 
-                                            className="bg-indigo-500 h-2.5 rounded-full" 
-                                            style={{ width: `${(((typeof count === 'number' ? count : 0) / (totalCreations || 1)) * 100)}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )) : (
+                            {sortedTools.length > 0 ? sortedTools.map(([tool, count]) => {
+                                // FIX: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+                                // Perform type check and calculations in variables for clarity and type safety.
+                                const numericCount = typeof count === 'number' ? count : 0;
+                                const widthPercentage = totalCreations > 0 ? (numericCount / totalCreations) * 100 : 0;
+
+                                return (
+                                  <div key={tool}>
+                                      <div className="flex justify-between items-center mb-1">
+                                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t[kebabToCamel(tool) as keyof typeof t] || tool.replace(/-/g, ' ')}</p>
+                                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{numericCount}</p>
+                                      </div>
+                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                          <div
+                                              className="bg-indigo-500 h-2.5 rounded-full"
+                                              style={{ width: `${widthPercentage}%` }}
+                                          ></div>
+                                      </div>
+                                  </div>
+                                );
+                            }) : (
                                 <p className="text-center text-gray-500 dark:text-gray-400 py-8">No usage data yet.</p>
                             )}
                         </div>
