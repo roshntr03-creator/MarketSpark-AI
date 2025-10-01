@@ -73,19 +73,3 @@ export const generateDashboardSuggestions = (lastCreationSummary: any, lang: 'en
 export const enhancePrompt = (prompt: string, context: string, lang: 'en' | 'ar'): Promise<PromptSuggestion[]> => {
     return invokeFunction('enhance-prompt', { prompt, context, lang });
 };
-
-export const generateAmbassadorFaces = (description: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ faces: string[] }> => {
-    return invokeFunction('generate-ambassador-faces', { description, brandPersona, lang });
-};
-
-export const generateAmbassadorProfile = (description: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ name: string; backstory: string; communicationStyle: string; voiceDescription: string; }> => {
-    return invokeFunction('generate-ambassador-profile', { description, brandPersona, lang });
-};
-
-export const generateAmbassadorPerformance = (profile: { name: string; backstory: string; communicationStyle: string; voiceDescription: string; }, content: string, lang: 'en' | 'ar'): Promise<{ performanceText: string }> => {
-    return invokeFunction('generate-ambassador-performance', { profile, content, lang });
-};
-
-export const saveAmbassador = (ambassadorData: Omit<VirtualAmbassador, 'id' | 'user_id' | 'bodyImageUrl'> & { bodyImageBase64: string }): Promise<VirtualAmbassador> => {
-    return invokeFunction('save-ambassador', { ambassadorData });
-};

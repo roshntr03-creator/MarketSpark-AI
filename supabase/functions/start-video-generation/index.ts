@@ -15,10 +15,10 @@ serve(async (req) => {
     try {
         const { prompt, image, brandPersona, lang } = await req.json();
 
-        // Updated prompt to be more specific and firm about the audio requirement.
-        const fullPrompt = lang === 'ar'
-            ? `أنشئ فيديو ترويجي قصير. الموضوع الأساسي هو: "${prompt}". يجب أن يحتوي الفيديو على موسيقى تصويرية آلية مبهجة وحيوية مناسبة للترويج لمنتج. الصوت ضروري للغاية لهذا الفيديو. يجب أن يتوافق النمط المرئي مع شخصية علامتنا التجارية: "${brandPersona}".`
-            : `Generate a short promotional video. The core subject is: "${prompt}". The video must have an uplifting and energetic instrumental soundtrack suitable for a product promotion. Audio is absolutely essential for this video. The visual style should align with our brand persona: "${brandPersona}".`;
+        // The client now sends a highly detailed prompt, so we use it directly.
+        // The brandPersona is incorporated into the client-side prompt if needed,
+        // but for UGC video, the direct instructions are more important.
+        const fullPrompt = prompt;
 
         let imagePayload;
         if (image) {

@@ -13,7 +13,6 @@ import { AuthProvider } from './contexts/AuthProvider';
 import { CreationHistoryProvider } from './contexts/CreationHistoryProvider';
 import { PlannerProvider } from './contexts/PlannerProvider';
 import { BrandProvider } from './contexts/BrandProvider';
-import { AmbassadorProvider } from './contexts/AmbassadorProvider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -27,11 +26,9 @@ root.render(
             <CreationHistoryProvider>
               <PlannerProvider>
                 <BrandProvider>
-                  <AmbassadorProvider>
-                    <MarketingToolsProvider>
-                      <App />
-                    </MarketingToolsProvider>
-                  </AmbassadorProvider>
+                  <MarketingToolsProvider>
+                    <App />
+                  </MarketingToolsProvider>
                 </BrandProvider>
               </PlannerProvider>
             </CreationHistoryProvider>

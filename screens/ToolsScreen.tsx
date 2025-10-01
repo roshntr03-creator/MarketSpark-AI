@@ -34,7 +34,6 @@ import BlogPostRepurposingWorkflowResultsScreen from '../components/BlogPostRepu
 import PromptEnhancerScreen from './PromptEnhancerScreen';
 import PromptEnhancerResultsScreen from '../components/PromptEnhancerResultsScreen';
 import VirtualAmbassadorGeneratorScreen from './VirtualAmbassadorGeneratorScreen';
-import VirtualAmbassadorResultsScreen from '../components/VirtualAmbassadorResultsScreen';
 
 
 interface ToolsScreenProps {
@@ -47,13 +46,13 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
         activeTool, setActiveTool, 
         campaignResult, socialPostsResult, imageEditResult, generatedImageResult, videoGenerationResult,
         competitorAnalysisResult, contentRepurposingResult, contentStrategyResult, assetKitResult, workflowResult,
-        promptEnhancerResult, virtualAmbassadorResult
+        promptEnhancerResult
     } = useMarketingTools();
 
     const tools: { id: Tool; title: string; description: string; Icon: React.ElementType; disabled?: boolean }[] = [
         { id: 'workflow', title: t.workflow, description: t.workflowDesc, Icon: WorkflowIcon },
         { id: 'prompt-enhancer', title: t.promptEnhancer, description: t.promptEnhancerDesc, Icon: SparklesIcon },
-        { id: 'virtual-ambassador-generator', title: t.virtualAmbassadorGenerator, description: t.virtualAmbassadorGeneratorDesc, Icon: FaceSmileIcon },
+        { id: 'virtual-ambassador-generator', title: t.ugcVideoGenerator, description: t.ugcVideoGeneratorDesc, Icon: FaceSmileIcon },
         { id: 'campaign-generator', title: t.campaignGenerator, description: t.campaignGeneratorDesc, Icon: RocketLaunchIcon },
         { id: 'social-post-assistant', title: t.socialPostAssistant, description: t.socialPostAssistantDesc, Icon: ChatBubbleLeftRightIcon },
         { id: 'image-generator', title: t.imageGenerator, description: t.imageGeneratorDesc, Icon: PhotoIcon },
@@ -98,7 +97,7 @@ const ToolsScreen: React.FC<ToolsScreenProps> = ({ setActiveScreen }) => {
             case 'prompt-enhancer':
                 return promptEnhancerResult ? <PromptEnhancerResultsScreen /> : <PromptEnhancerScreen />;
             case 'virtual-ambassador-generator':
-                return virtualAmbassadorResult ? <VirtualAmbassadorResultsScreen /> : <VirtualAmbassadorGeneratorScreen />;
+                 return videoGenerationResult ? <VideoGeneratorResultsScreen /> : <VirtualAmbassadorGeneratorScreen />;
             default:
                 return null;
         }
