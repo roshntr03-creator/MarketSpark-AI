@@ -204,15 +204,17 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                         <p className="text-md text-gray-600 dark:text-gray-400 mb-6">{t.step2UgcSubtitle}</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {avatars.map((avatar, index) => (
-                                <button
+                                <div
                                     key={avatar.id}
                                     onClick={() => setSelectedAvatarIndex(index)}
-                                    className={`w-full text-left p-2 rounded-xl transition-all duration-200 border-2 bg-gray-100 dark:bg-gray-800 ${
+                                    className={`p-2 rounded-xl cursor-pointer transition-all duration-200 border-2 bg-gray-100 dark:bg-gray-800 ${
                                         selectedAvatarIndex === index
                                             ? 'border-indigo-500'
                                             : 'border-transparent hover:border-indigo-400/50'
                                     }`}
+                                    role="button"
                                     aria-pressed={selectedAvatarIndex === index}
+                                    tabIndex={0}
                                 >
                                     <img
                                         src={avatar.dataUri}
@@ -222,7 +224,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                                     <p className="mt-2 text-xs text-center text-gray-600 dark:text-gray-400 h-12 overflow-hidden">
                                         {lang === 'ar' ? avatar.description_ar : avatar.description}
                                     </p>
-                                </button>
+                                </div>
                             ))}
                         </div>
                         <button onClick={handleGenerateVideo} disabled={selectedAvatarIndex === null} className="mt-8 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 disabled:opacity-50 text-lg">

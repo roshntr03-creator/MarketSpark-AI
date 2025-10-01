@@ -29,6 +29,7 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
             .from('creations')
             .select('id, user_id, tool, timestamp, result')
             .eq('user_id', user.id)
+            .not('result', 'is', null) // Filter out potentially malformed rows
             .order('timestamp', { ascending: false })
             .limit(MAX_HISTORY_ITEMS);
 

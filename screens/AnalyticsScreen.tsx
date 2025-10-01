@@ -17,12 +17,13 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // FIX: Coerce potentially undefined `count` to a number before adding to the sum.
-    // The `rawStats` object can have undefined values, causing type errors with arithmetic operations.
-    const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (Number(count) || 0), 0);
+    // FIX: The values from Object.values(rawStats) can be undefined or inferred as 'unknown',
+    // so we use a `typeof` check to ensure the reduce function performs a valid numeric addition.
+    const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
 
-    // FIX: Safely sort tools by coercing potentially undefined counts to numbers before comparison.
-    const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0));
+    // FIX: The values from Object.entries(rawStats) can be undefined or inferred as 'unknown',
+    // so we use a `typeof` check to ensure the sort function performs a valid numeric comparison.
+    const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0));
 
     const maxActivity = Math.max(...recentActivity.map(a => a.value), 0) || 1;
 
@@ -40,7 +41,6 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t.toolUsage}</h2>
                         <div className="space-y-4">
                             {sortedTools.length > 0 ? sortedTools.map(([tool, count]) => {
-                                // FIX: Coerce count to a number to ensure it can be used in calculations and rendered safely.
                                 const numericCount = Number(count) || 0;
                                 const widthPercentage = totalCreations > 0 ? (numericCount / totalCreations) * 100 : 0;
 
