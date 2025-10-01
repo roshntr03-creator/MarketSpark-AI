@@ -46,10 +46,10 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{count}</p>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                        {/* FIX: The 'count' can be undefined or inferred as 'unknown'. Use a `typeof` check for the calculation. */}
+                                        {/* Also, guard against division by zero if totalCreations is 0. */}
                                         <div 
                                             className="bg-indigo-500 h-2.5 rounded-full" 
-                                            // FIX: The 'count' can be undefined or inferred as 'unknown'. Use a `typeof` check for the calculation.
-                                            // Also, guard against division by zero if totalCreations is 0.
                                             style={{ width: `${(((typeof count === 'number' ? count : 0) / (totalCreations || 1)) * 100)}%` }}
                                         ></div>
                                     </div>

@@ -15,9 +15,8 @@ serve(async (req) => {
     try {
         const { prompt, image, brandPersona, lang } = await req.json();
 
-        // The client now sends a highly detailed prompt, so we use it directly.
-        // The brandPersona is incorporated into the client-side prompt if needed,
-        // but for UGC video, the direct instructions are more important.
+        // The client now sends a highly detailed prompt (especially for UGC), 
+        // so we use it directly without modification.
         const fullPrompt = prompt;
 
         let imagePayload;
@@ -42,6 +41,7 @@ serve(async (req) => {
             status: 200,
         });
     } catch (error) {
+        console.error("Error in start-video-generation function:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
