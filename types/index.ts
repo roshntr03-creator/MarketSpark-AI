@@ -176,12 +176,12 @@ export interface CreationHistoryItem {
 export interface PlannerItem {
     id: string; // Corresponds to the database primary key
     user_id: string;
-    creationId?: string; // For linking back to a full creation
-    scheduledDateTime: string;
+    creation_id?: string; // For linking back to a full creation
+    scheduled_date_time: string;
     // For content strategy items that are not full creations yet
     title?: string;
     platform?: string;
-    contentIdea?: string;
+    content_idea?: string;
     format?: string;
 }
 

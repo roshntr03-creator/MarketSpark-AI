@@ -49,10 +49,10 @@ const ContentStrategyResultsScreen: React.FC<ContentStrategyResultsScreenProps> 
             }
 
             addPlannerItem({
-                scheduledDateTime: scheduledDate.toISOString(),
+                scheduled_date_time: scheduledDate.toISOString(),
                 title: item.title,
                 platform: item.platform,
-                contentIdea: item.contentIdea,
+                content_idea: item.contentIdea,
                 format: item.format,
             });
         });

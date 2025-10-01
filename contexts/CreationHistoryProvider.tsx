@@ -25,17 +25,21 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
     const fetchHistory = async () => {
       if (user) {
         try {
+          // Optimized query: Fetches the latest items without slow filters.
           const { data, error } = await supabase
             .from('creations')
             .select('id, user_id, tool, timestamp, result')
             .eq('user_id', user.id)
-            .not('result', 'is', null) // Filter out potentially malformed rows
             .order('timestamp', { ascending: false })
             .limit(MAX_HISTORY_ITEMS);
 
           if (error) throw error;
           
-          const mappedHistory: CreationHistoryItem[] = data.map((item: any) => ({
+          // Filter out null results on the client side to avoid slow DB queries.
+          // This is the correct, performant way to handle this.
+          const validData = data ? data.filter(item => item.result != null) : [];
+          
+          const mappedHistory: CreationHistoryItem[] = validData.map((item: any) => ({
             id: item.id,
             user_id: item.user_id,
             tool: item.tool,
@@ -75,6 +79,8 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
     
     const timestampString = new Date(creationToStore.timestamp).toLocaleString();
 
+    // To save storage space and avoid very large JSON objects in the DB,
+    // we replace large base64 data with placeholder strings.
     if (tool === 'video-generator' || tool === 'virtual-ambassador-generator') {
         (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
     } else if (tool === 'image-generator') {

@@ -23,10 +23,10 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ creation, onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const scheduledDateTime = new Date(`${date}T${time}`).toISOString();
+    const scheduled_date_time = new Date(`${date}T${time}`).toISOString();
     addPlannerItem({
-      creationId: creation.id,
-      scheduledDateTime,
+      creation_id: creation.id,
+      scheduled_date_time,
     });
     setIsScheduled(true);
     setTimeout(() => {

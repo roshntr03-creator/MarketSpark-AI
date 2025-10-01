@@ -27,7 +27,7 @@ export const PlannerProvider: React.FC<{ children: ReactNode }> = ({ children })
                     .from('planner_items')
                     .select('*')
                     .eq('user_id', user.id)
-                    .order('scheduledDateTime', { ascending: true });
+                    .order('scheduled_date_time', { ascending: true });
                 
                 if (error) throw error;
                 setPlannerItems(data as PlannerItem[]);
@@ -64,7 +64,7 @@ export const PlannerProvider: React.FC<{ children: ReactNode }> = ({ children })
             if (error) throw error;
 
             // Add to local state for immediate UI update
-            setPlannerItems(prevItems => [...prevItems, data as PlannerItem].sort((a, b) => new Date(a.scheduledDateTime).getTime() - new Date(b.scheduledDateTime).getTime()));
+            setPlannerItems(prevItems => [...prevItems, data as PlannerItem].sort((a, b) => new Date(a.scheduled_date_time).getTime() - new Date(b.scheduled_date_time).getTime()));
 
         } catch(error) {
             console.error("Failed to save planner item to database:", error);

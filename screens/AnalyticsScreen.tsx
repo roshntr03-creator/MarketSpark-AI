@@ -17,12 +17,12 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { t } = useTranslations();
     const { rawStats, recentActivity } = useUsageStats();
 
-    // FIX: The value `count` from Object.values(rawStats) can be inferred as 'unknown'.
+    // FIX: The value `count` from Object.values(rawStats) can be inferred as 'unknown' or be undefined.
     // A `typeof` check is added to ensure `count` is a number before adding it to the sum,
-    // which resolves the `Operator '+' cannot be applied` error.
+    // which resolves the `Operator '+' cannot be applied` error and ensures totalCreations is a number.
     const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
 
-    // FIX: The values from Object.entries(rawStats) can be inferred as 'unknown'.
+    // FIX: The values from Object.entries(rawStats) can be inferred as 'unknown' or be undefined.
     // A `typeof` check is added to ensure the sort function performs a valid numeric comparison.
     const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0));
 

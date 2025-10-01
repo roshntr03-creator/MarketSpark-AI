@@ -18,7 +18,7 @@ const PlannerCard: React.FC<{ item: PlannerItem; creationItem: CreationHistoryIt
     const { t } = useTranslations();
     
     let title = item.title || 'Scheduled Item';
-    let description = item.contentIdea || 'No details available.';
+    let description = item.content_idea || 'No details available.';
     let toolName = item.format || 'Scheduled';
     
     const creation = creationItem?.result;
@@ -72,7 +72,7 @@ const PlannerScreen: React.FC<PlannerScreenProps> = ({ setActiveScreen }) => {
 
     const groupedItems = useMemo(() => {
         return plannerItems.reduce((acc, item) => {
-            const date = new Date(item.scheduledDateTime).toLocaleDateString(undefined, {
+            const date = new Date(item.scheduled_date_time).toLocaleDateString(undefined, {
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
             if (!acc[date]) {
@@ -97,7 +97,7 @@ const PlannerScreen: React.FC<PlannerScreenProps> = ({ setActiveScreen }) => {
                             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3">{date}</h2>
                             <div className="space-y-4">
                                 {groupedItems[date].map(item => {
-                                    const creationItem = item.creationId ? getCreationById(item.creationId) : undefined;
+                                    const creationItem = item.creation_id ? getCreationById(item.creation_id) : undefined;
                                     return <PlannerCard key={item.id} item={item} creationItem={creationItem} />
                                 })}
                             </div>

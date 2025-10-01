@@ -16,40 +16,48 @@ interface Avatar {
     mimeType: string;
 }
 
-const avatarData: Omit<Avatar, 'dataUri'>[] = [
+const avatarData: Omit<Avatar, 'dataUri' | 'base64'>[] = [
     {
         id: 'avatar1',
         description: 'A friendly woman in her late 20s with brown hair, wearing a denim jacket, sitting in a cozy, well-lit home office',
         description_ar: 'امرأة ودودة في أواخر العشرينات من عمرها بشعر بني، ترتدي سترة من الدنيم، وتجلس في مكتب منزلي مريح ومضاء جيدًا',
-        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUDBAYH/8QAKxAAAQMDAwQCAgMAAAAAAAAAAQIDBAUGEQASIQcxQRMiFGEiMkJxgZGh/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAECAwT/xAAeEQEBAAEEAwEAAAAAAAAAAAABAAIRIQMSMUFRcf/aAAwDAQACEQMRAD8A68/W6NTp71PqVUgxZcbZ5TL8hCHFbkgjcCeRgnke9N59/wBhpbKZE+6aNGaWkOIW9VaekKSeQQVOcg+tVrd+2ar12vV6sW/TIzMmrOl6Wt+OHy4sgAnG4Y4AGMY4rL6jqlzXLsVyvT6C08lpLKVxKa00oJSMAYCSOPf1qS2u/45L6xvt1dD3/e9h0yIqXPu6gR2EHBdcthpIPsSpwAn61BqXVTZ1NZU9bVyUWqyF7fLjUaO66lPcFxKVkDPzWbLlzZsgyZ0p+S+r8zzyytZ+5JyaY7z6qO/1JbV6c/2U88TqDpDqvZ9WcUm2Lsq9TLXmOx48V91aRwFKS4VAH3xVD/AOquwA4D/wDWqBx71+K1n3E+qj9TWV+z2O4qO7r1BqPUC3b5pbEu163S6ywpWwuwZSH0JXgHBUgnBwQce9SMaowZa3WIsyO84wsodQ26lSm1A4IUAeCDkHPpX542pcFwW5VF1e16xNpc1TY0X4UlTKygEEp3JIOOCR9a/Q/b1vW3dtqM3HcE6nyqvJfdLz9PkF9CkpISkbiBkgDPGOab3FjE1uQnZf/9k=',
         mimeType: 'image/jpeg',
     },
     {
         id: 'avatar2',
         description: 'A professional man in his 30s with short dark hair and glasses, wearing a neat sweater in a modern office setting',
         description_ar: 'رجل محترف في الثلاثينات من عمره بشعر داكن قصير ونظارات، يرتدي سترة أنيقة في بيئة مكتبية عصرية',
-        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGQABAQEBAQEAAAAAAAAAAAAAAgEDAAQF/8QAKBAAAgEDAwMEAwEAAAAAAAAAAQIDAAQRBRIhEzFRBhQiQYEyQmJx/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAEDAgT/xAAgEQACAQQCAwEAAAAAAAAAAAAAAQIDERIEITEyUWGB/9oADAMBAAIRAxEAPwDq65yEkgAEn0FRPdWkLmOVgCpII2njPpxWHrd7qFrLGtpG7Ag7iI9wPsf6/azmq6rraXTxWzTxxoANyRZ3cd+fH0rKdaMXZGqVvR0pYggEkcdzVc2pWzKGFzFljgfOOa4u71LW552dLi6G48KImGB2GBxUf8AEan5u4zXXmOdsP+10Ljq+h+nS+I6N9eQwIzzSKiKCWYngAeSaw9V8R2NtAyWkizytwAvKj3JHH7rnNR1fU58mW7uXz6uST/AFk1GbmSRizsWJ5JJyTXU69vRXSoLeW9nknnYvJIxZmPcnk1EoqhRVsEEgggkHkEeooBCAiiigH//Z',
         mimeType: 'image/jpeg',
     },
     {
         id: 'avatar3',
         description: 'A trustworthy-looking woman in her 40s with blonde hair, wearing a blazer, standing in a clean, minimalist studio',
         description_ar: 'امرأة تبدو جديرة بالثقة في الأربعينات من عمرها بشعر أشقر، ترتدي سترة رسمية، وتقف في استوديو بسيط ونظيف',
-        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAMCBAAFBgf/xAApEAABAgUEAgIDAQEAAAAAAAABAgMABBEFEiETIjFRYQZBYnETI0KB/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAIBBAP/xAAdEQACAgMAAwEAAAAAAAAAAAAAAQIREiExEEFR/9oADAMBAAIRAD8A6UqYl2XU81xDaE6qUcAVjJ2/Il1Fpl8OrOymwVE/Olc4rLzE2uZc2lQ+GlRAQP0nn7k1FhP2iRzH6r6H067fllwSssy5SAcJUskq9wAOPuajzO1J8K+3KyyFtnVKnVkKHwADj5J+I4eUqUtS1qKlKOSTqTUe0RZnP6q10/sUvO2ZltWJebmB5s7KmwEkfIIJ/cVGm9qL7r2ZdgsNtnZDjhUofAAx8k/FYa+tXtEmcyH5t9DrdOzpZalBLcw4VFRShJSlWvU7j35rNzW2ZpxuKzLqQdlSU4T9yTSooEV1bMzk/wC20aM1MTCFO2+blR5K3QkZlSglIA3OgG1c0gKCAoD0k9xUqS/3EshW7Y8Kvof080LqVlK0KCkKGQRqD5piiEwIoooB//Z',
         mimeType: 'image/jpeg',
     },
     {
         id: 'avatar4',
         description: 'An energetic young man in his early 20s with curly hair, wearing a casual t-shirt, in a bright, modern cafe',
         description_ar: 'شاب مفعم بالحيوية في أوائل العشرينات من عمره بشعر مجعد، يرتدي قميصًا عاديًا، في مقهى عصري ومشرق',
-        base64: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAwQFAgABBgf/xAAoEAACAQMDAwQCAwAAAAAAAAABAgMABBEFEiExExQiQWEjMmGBFEb/xAAXAQEBAQEAAAAAAAAAAAAAAAABAgAD/8QAHBEBAQEAAgMBAAAAAAAAAAAAAAERAhIhIDFh/9oADAMBAAIRAxEAPwDo9K8ooDyiiigKKKKA8rN671N9MtUkhRXmlbYrHO0eScf2K0leUUDaW9/qF08moXTzSOfmdj9ABwBS2a4niO6KV1HII4x8g1oKKmViK5lZizMSTySTzS6inFZK8oooIqKKKApfRRQFFFFAf/9k=',
         mimeType: 'image/jpeg',
     }
 ];
 
+// Raw base64 strings are stored separately to avoid clutter
+const rawBase64Strings: { [key: string]: string } = {
+    avatar1: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUDBAYH/8QAKxAAAQMDAwQCAgMAAAAAAAAAAQIDBAUGEQASIQcxQRMiFGEiMkJxgZGh/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAECAwT/xAAeEQEBAAEEAwEAAAAAAAAAAAABAAIRIQMSMUFRcf/aAAwDAQACEQMRAD8A68/W6NTp71PqVUgxZcbZ5TL8hCHFbkgjcCeRgnke9N59/wBhpbKZE+6aNGaWkOIW9VaekKSeQQVOcg+tVrd+2ar12vV6sW/TIzMmrOl6Wt+OHy4sgAnG4Y4AGMY4rL6jqlzXLsVyvT6C08lpLKVxKa00oJSMAYCSOPf1qS2u/45L6xvt1dD3/e9h0yIqXPu6gR2EHBdcthpIPsSpwAn61BqXVTZ1NZU9bVyUWqyF7fLjUaO66lPcFxKVkDPzWbLlzZsgyZ0p+S+r8zzyytZ+5JyaY7z6qO/1JbV6c/2U88TqDpDqvZ9WcUm2Lsq9TLXmOx48V91aRwFKS4VAH3xVD/AOquwA4D/wDWqBx71+K1n3E+qj9TWV+z2O4qO7r1BqPUC3b5pbEu163S6ywpWwuwZSH0JXgHBUgnBwQce9SMaowZa3WIsyO84wsodQ26lSm1A4IUAeCDkHPpX542pcFwW5VF1e16xNpc1TY0X4UlTKygEEp3JIOOCR9a/Q/b1vW3dtqM3HcE6nyqvJfdLz9PkF9CkpISkbiBkgDPGOab3FjE1uQnZf/9k=',
+    avatar2: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGQABAQEBAQEAAAAAAAAAAAAAAgEDAAQF/8QAKBAAAgEDAwMEAwEAAAAAAAAAAQIDAAQRBRIhEzFRBhQiQYEyQmJx/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAEDAgT/xAAgEQACAQQCAwEAAAAAAAAAAAAAAQIDERIEITEyUWGB/9oADAMBAAIRAxEAPwDq65yEkgAEn0FRPdWkLmOVgCpII2njPpxWHrd7qFrLGtpG7Ag7iI9wPsf6/azmq6rraXTxWzTxxoANyRZ3cd+fH0rKdaMXZGqVvR0pYggEkcdzVc2pWzKGFzFljgfOOa4u71LW552dLi6G48KImGB2GBxUf8AEan5u4zXXmOdsP+10Ljq+h+nS+I6N9eQwIzzSKiKCWYngAeSaw9V8R2NtAyWkizytwAvKj3JHH7rnNR1fU58mW7uXz6uST/AFk1GbmSRizsWJ5JJyTXU69vRXSoLeW9nknnYvJIxZmPcnk1EoqhRVsEEgggkHkEeooBCAiiigH//Z',
+    avatar3: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAMCBAAFBgf/xAApEAABAgUEAgIDAQEAAAAAAAABAgMABBEFEiETIjFRYQZBYnETI0KB/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAIBBAP/xAAdEQACAgMAAwEAAAAAAAAAAAAAAQIREiExEEFR/9oADAMBAAIRAD8A6UqYl2XU81xDaE6qUcAVjJ2/Il1Fpl8OrOymwVE/Olc4rLzE2uZc2lQ+GlRAQP0nn7k1FhP2iRzH6r6H067fllwSssy5SAcJUskq9wAOPuajzO1J8K+3KyyFtnVKnVkKHwADj5J+I4eUqUtS1qKlKOSTqTUe0RZnP6q10/sUvO2ZltWJebmB5s7KmwEkfIIJ/cVGm9qL7r2ZdgsNtnZDjhUofAAx8k/FYa+tXtEmcyH5t9DrdOzpZalBLcw4VFRShJSlWvU7j35rNzW2ZpxuKzLqQdlSU4T9yTSooEV1bMzk/wC20aM1MTCFO2+blR5K3QkZlSglIA3OgG1c0gKCAoD0k9xUqS/3EshW7Y8Kvof080LqVlK0KCkKGQRqD5piiEwIoooB//Z',
+    avatar4: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAwQFAgABBgf/xAAoEAACAQMDAwQCAwAAAAAAAAABAgMABBEFEiExExQiQWEjMmGBFEb/xAAXAQEBAQEAAAAAAAAAAAAAAAABAgAD/8QAHBEBAQEAAgMBAAAAAAAAAAAAAAERAhIhIDFh/9oADAMBAAIRAxEAPwDo9K8ooDyiiigKKKKA8rN671N9MtUkhRXmlbYrHO0eScf2K0leUUDaW9/qF08moXTzSOfmdj9ABwBS2a4niO6KV1HII4x8g1oKKmViK5lZizMSTySTzS6inFZK8oooIqKKKApfRRQFFFFAf/9k=',
+};
+
 export const avatars: Avatar[] = avatarData.map(avatar => {
-    // Remove all non-base64 characters (whitespace, newlines, etc.)
-    const cleanedBase64 = avatar.base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    const rawString = rawBase64Strings[avatar.id] || '';
+    // THOROUGH CLEANING: The base64 strings might contain hidden characters
+    // or newlines from being copied/pasted. This regex removes *everything* that
+    // is not a valid base64 character (A-Z, a-z, 0-9, +, /, =) to prevent
+    // 'ERR_INVALID_URL' in the browser and 'Unable to process input image' from the Gemini API.
+    const cleanedBase64 = rawString.replace(/[^A-Za-z0-9+/=]/g, '');
     return {
         ...avatar,
         base64: cleanedBase64,
