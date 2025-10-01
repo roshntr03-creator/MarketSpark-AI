@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthProvider';
 import { useTranslations } from '../contexts/LanguageProvider';
-import { SparklesIcon, GoogleIcon } from '../components/icons';
+import { SparklesIcon, GoogleIcon, EyeIcon, EyeSlashIcon } from '../components/icons';
 
 const LoginScreen: React.FC = () => {
   const { login, signUp, loginWithGoogle } = useAuth();
@@ -16,26 +16,34 @@ const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
+    setIsLoading(true);
 
-    if (isSigningUp && password !== confirmPassword) {
-      setError(t.passwordsDoNotMatchError);
-      return;
-    }
-
-    const { error } = isSigningUp 
-      ? await signUp(email, password)
-      : await login(email, password);
-
-    if (error) {
-      setError(error.message);
-    } else if (isSigningUp) {
-      setMessage(t.signUpSuccessMessage);
-      setIsSigningUp(false); // Switch back to login view
+    try {
+      if (isSigningUp && password !== confirmPassword) {
+        setError(t.passwordsDoNotMatchError);
+        return;
+      }
+  
+      const { error } = isSigningUp 
+        ? await signUp(email, password)
+        : await login(email, password);
+  
+      if (error) {
+        setError(error.message);
+      } else if (isSigningUp) {
+        setMessage(t.signUpSuccessMessage);
+        setIsSigningUp(false); // Switch back to login view
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,29 +94,46 @@ const LoginScreen: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.passwordLabel}</label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t.passwordPlaceholder}
-                      className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm"
-                      required
-                    />
+                    <div className="flex justify-between items-center mb-1">
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t.passwordLabel}</label>
+                      {!isSigningUp && (
+                          <a href="#" onClick={(e) => e.preventDefault()} className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                              {t.forgotPassword}
+                          </a>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={t.passwordPlaceholder}
+                        className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm pr-10"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400" aria-label={showPassword ? t.hidePassword : t.showPassword}>
+                          {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
                   {isSigningUp && (
                     <div>
                         <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.confirmPasswordLabel}</label>
-                        <input
-                        type="password"
-                        id="confirm-password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder={t.confirmPasswordPlaceholder}
-                        className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm"
-                        required
-                        />
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            id="confirm-password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder={t.confirmPasswordPlaceholder}
+                            className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg backdrop-blur-sm pr-10"
+                            required
+                          />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400" aria-label={showConfirmPassword ? t.hidePassword : t.showPassword}>
+                              {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                          </button>
+                        </div>
                     </div>
                   )}
                   {error && (
@@ -123,9 +148,16 @@ const LoginScreen: React.FC = () => {
                   )}
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 text-lg"
+                    disabled={isLoading}
+                    className="w-full flex justify-center items-center gap-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 text-lg disabled:opacity-75 disabled:cursor-wait"
                   >
-                    {isSigningUp ? t.signUpButton : t.loginButton}
+                    {isLoading && (
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    )}
+                    {isLoading ? (isSigningUp ? t.signingUp : t.signingIn) : (isSigningUp ? t.signUpButton : t.loginButton)}
                   </button>
                 </form>
             </div>

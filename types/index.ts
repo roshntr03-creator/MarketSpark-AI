@@ -182,3 +182,9 @@ export interface RecentActivity {
     date: Date;
     value: number;
 }
+
+export interface TranscriptEntry {
+    id: number;
+    speaker: 'user' | 'model';
+    text: string;
+}

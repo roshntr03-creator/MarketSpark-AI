@@ -1,6 +1,7 @@
 {
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ],
   "name": "Marketing AI",
   "description": ""

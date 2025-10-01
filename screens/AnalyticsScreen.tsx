@@ -18,9 +18,9 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
     const { rawStats, recentActivity } = useUsageStats();
 
     // FIX: The `count` from `rawStats` can be undefined. Defaulting to 0 ensures the reduce operation works correctly.
-    const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (count || 0), 0);
+    const totalCreations = Object.values(rawStats).reduce((sum, count) => sum + (count ?? 0), 0);
     // FIX: The values `a` and `b` from `rawStats` can be undefined. Defaulting to 0 prevents a runtime error during the sort comparison.
-    const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0));
+    const sortedTools = Object.entries(rawStats).sort(([, a], [, b]) => (b ?? 0) - (a ?? 0));
 
     const maxActivity = Math.max(...recentActivity.map(a => a.value), 0) || 1;
 
@@ -48,7 +48,7 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ setActiveScreen }) =>
                                             className="bg-indigo-500 h-2.5 rounded-full" 
                                             // FIX: `count` can be undefined and `totalCreations` can be 0.
                                             // Defaulting `count` to 0 and `totalCreations` to 1 (to prevent division by zero) fixes potential errors.
-                                            style={{ width: `${((count || 0) / (totalCreations || 1)) * 100}%` }}
+                                            style={{ width: `${((count ?? 0) / (totalCreations || 1)) * 100}%` }}
                                         ></div>
                                     </div>
                                 </div>

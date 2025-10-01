@@ -13,11 +13,13 @@ import SettingsScreen from './screens/SettingsScreen';
 import PlannerScreen from './screens/PlannerScreen';
 import OnboardingFlow from './components/OnboardingFlow';
 import LoginScreen from './screens/LoginScreen';
+import VoiceCoachScreen from './screens/VoiceCoachScreen';
 import { useAuth } from './contexts/AuthProvider';
 import type { Screen } from './types/index';
 
 const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<Screen>('dashboard');
+  const [isVoiceCoachOpen, setIsVoiceCoachOpen] = useState(false);
   const { session } = useAuth();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean>(() => {
     return localStorage.getItem('onboardingComplete') === 'true';
@@ -31,7 +33,7 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'dashboard':
-        return <DashboardScreen setActiveScreen={setActiveScreen} />;
+        return <DashboardScreen setActiveScreen={setActiveScreen} setIsVoiceCoachOpen={setIsVoiceCoachOpen} />;
       case 'tools':
         return <ToolsScreen setActiveScreen={setActiveScreen} />;
       case 'analytics':
@@ -41,7 +43,7 @@ const App: React.FC = () => {
       case 'settings':
         return <SettingsScreen />;
       default:
-        return <DashboardScreen setActiveScreen={setActiveScreen} />;
+        return <DashboardScreen setActiveScreen={setActiveScreen} setIsVoiceCoachOpen={setIsVoiceCoachOpen} />;
     }
   };
   
@@ -67,6 +69,7 @@ const App: React.FC = () => {
           <BottomNavBar activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
         </div>
       </div>
+      {isVoiceCoachOpen && <VoiceCoachScreen onClose={() => setIsVoiceCoachOpen(false)} />}
     </div>
   );
 };

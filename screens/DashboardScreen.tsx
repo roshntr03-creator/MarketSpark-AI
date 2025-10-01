@@ -12,6 +12,7 @@ import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, SwatchIcon, WorkflowIcon, AdjustmentsIcon } from '../components/icons';
 // FIX: Imported 'generateMarketingTip' to resolve a 'not found' error.
 import { generateMarketingTip, generateMarketingTipForTool, generateDashboardSuggestions } from '../services/geminiService';
+import VoiceCoachFAB from '../components/VoiceCoachFAB';
 
 const WEEKLY_CREATION_GOAL = 15;
 
@@ -249,7 +250,7 @@ const MarketingTip: React.FC = () => {
     const mostUsedTool = useMemo(() => {
         if (Object.keys(rawStats).length === 0) return null;
         // FIX: The values `a` and `b` from `rawStats` can be undefined. Defaulting to 0 prevents a runtime error during the sort comparison.
-        return Object.entries(rawStats).sort(([, a], [, b]) => (b || 0) - (a || 0))[0][0] as Tool;
+        return Object.entries(rawStats).sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))[0][0] as Tool;
     }, [rawStats]);
 
     useEffect(() => {
@@ -287,7 +288,7 @@ const MarketingTip: React.FC = () => {
     );
 };
 
-const DashboardScreen: React.FC<{ setActiveScreen: (screen: Screen) => void }> = ({ setActiveScreen }) => {
+const DashboardScreen: React.FC<{ setActiveScreen: (screen: Screen) => void, setIsVoiceCoachOpen: (isOpen: boolean) => void }> = ({ setActiveScreen, setIsVoiceCoachOpen }) => {
     const { t } = useTranslations();
     const { history } = useCreationHistory();
     const recentCreations = history.slice(0, 5);
@@ -300,7 +301,7 @@ const DashboardScreen: React.FC<{ setActiveScreen: (screen: Screen) => void }> =
     };
 
     return (
-        <div className="animate-fade-in p-4 sm:p-6 md:p-8">
+        <div className="animate-fade-in p-4 sm:p-6 md:p-8 h-full relative">
             <div className="max-w-5xl mx-auto">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{getGreeting()}</h1>
                 <p className="text-md text-gray-600 dark:text-gray-400 mt-1">{t.dashboardSubtitle}</p>
@@ -340,6 +341,7 @@ const DashboardScreen: React.FC<{ setActiveScreen: (screen: Screen) => void }> =
                     </div>
                 </div>
             </div>
+            <VoiceCoachFAB onClick={() => setIsVoiceCoachOpen(true)} />
         </div>
     );
 };
