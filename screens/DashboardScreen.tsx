@@ -9,7 +9,8 @@ import { useTranslations } from '../contexts/LanguageProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
-import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, SwatchIcon, WorkflowIcon, AdjustmentsIcon } from '../components/icons';
+// FIX: Added FaceSmileIcon to the import list for the virtual ambassador tool icon.
+import { LightBulbIcon, RocketLaunchIcon, CheckCircleIcon, SparklesIcon, ChatBubbleLeftRightIcon, PhotoIcon, PlayCircleIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, SwatchIcon, WorkflowIcon, AdjustmentsIcon, FaceSmileIcon } from '../components/icons';
 // FIX: Imported 'generateMarketingTip' to resolve a 'not found' error.
 import { generateMarketingTip, generateMarketingTipForTool, generateDashboardSuggestions } from '../services/geminiService';
 import VoiceCoachFAB from '../components/VoiceCoachFAB';
@@ -62,7 +63,7 @@ const createCreationSummary = (item: CreationHistoryItem) => {
 
 
 const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, className }) => {
-    // FIX: Add 'prompt-enhancer' to the icon map to match the 'Tool' type.
+    // FIX: Add missing tools to the icon map to satisfy the Record<Tool, ...> type and prevent runtime errors.
     const iconMap: Record<Tool, React.ElementType> = {
         'campaign-generator': RocketLaunchIcon,
         'social-post-assistant': ChatBubbleLeftRightIcon,
@@ -75,6 +76,7 @@ const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, classNam
         'asset-kit-generator': SwatchIcon,
         'workflow': WorkflowIcon,
         'prompt-enhancer': SparklesIcon,
+        'virtual-ambassador-generator': FaceSmileIcon,
     };
     const Icon = iconMap[tool] || SparklesIcon;
     return <Icon className={className} />;

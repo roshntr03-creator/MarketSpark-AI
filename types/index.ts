@@ -16,7 +16,8 @@ export type Tool =
   | 'content-strategist'
   | 'asset-kit-generator'
   | 'workflow'
-  | 'prompt-enhancer';
+  | 'prompt-enhancer'
+  | 'virtual-ambassador-generator';
 
 export interface Source {
   uri: string;
@@ -151,7 +152,17 @@ export interface DashboardSuggestion {
   promptData?: string;
 }
 
-export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult | PromptSuggestion[];
+export interface VirtualAmbassador {
+    id: string;
+    user_id: string;
+    name: string;
+    backstory: string;
+    communicationStyle: string;
+    faceImageUrl: string;
+    coreDescription: string;
+}
+
+export type CreationResult = Campaign | SocialPost[] | EditedImage | GeneratedImage | GeneratedVideo | CompetitorAnalysis | ContentRepurposingResult | ContentStrategy | AssetKit | NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult | PromptSuggestion[] | VirtualAmbassador;
 
 export interface CreationHistoryItem {
   id: string; // Corresponds to the database primary key

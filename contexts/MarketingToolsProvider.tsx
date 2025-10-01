@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult, PromptSuggestion } from '../types/index';
+import type { Tool, Campaign, SocialPost, EditedImage, GeneratedImage, GeneratedVideo, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult, PromptSuggestion, VirtualAmbassador } from '../types/index';
 
 interface ResultWithCreation<T> {
     result: T;
@@ -47,6 +47,9 @@ interface MarketingToolsContextType {
     promptEnhancerResult: ResultWithCreation<PromptSuggestion[]> | null;
     setPromptEnhancerResult: (result: ResultWithCreation<PromptSuggestion[]> | null) => void;
 
+    virtualAmbassadorResult: ResultWithCreation<VirtualAmbassador> | null;
+    setVirtualAmbassadorResult: (result: ResultWithCreation<VirtualAmbassador> | null) => void;
+
     initialSocialPostTopic: string | null;
     setInitialSocialPostTopic: (topic: string | null) => void;
 
@@ -75,6 +78,7 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const [assetKitResult, setAssetKitResult] = useState<ResultWithCreation<AssetKit> | null>(null);
     const [workflowResult, setWorkflowResult] = useState<ResultWithCreation<NewProductLaunchWorkflowResult | BlogPostRepurposingWorkflowResult> | null>(null);
     const [promptEnhancerResult, setPromptEnhancerResult] = useState<ResultWithCreation<PromptSuggestion[]> | null>(null);
+    const [virtualAmbassadorResult, setVirtualAmbassadorResult] = useState<ResultWithCreation<VirtualAmbassador> | null>(null);
 
     const [initialSocialPostTopic, setInitialSocialPostTopic] = useState<string | null>(null);
     const [initialImageGeneratorPrompt, setInitialImageGeneratorPrompt] = useState<string | null>(null);
@@ -95,6 +99,7 @@ export const MarketingToolsProvider: React.FC<{ children: ReactNode }> = ({ chil
         assetKitResult, setAssetKitResult,
         workflowResult, setWorkflowResult,
         promptEnhancerResult, setPromptEnhancerResult,
+        virtualAmbassadorResult, setVirtualAmbassadorResult,
         initialSocialPostTopic, setInitialSocialPostTopic,
         initialImageGeneratorPrompt, setInitialImageGeneratorPrompt,
         initialImageForEditor, setInitialImageForEditor,

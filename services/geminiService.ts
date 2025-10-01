@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { supabase } from '../lib/supabaseClient';
-import type { Campaign, SocialPost, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool, PromptSuggestion } from '../types/index';
+import type { Campaign, SocialPost, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, CreationHistoryItem, DashboardSuggestion, Tool, PromptSuggestion, VirtualAmbassador } from '../types/index';
 
 // A generic function to handle Supabase function invocation and error handling.
 const invokeFunction = async <T>(functionName: string, body: object): Promise<T> => {
@@ -72,4 +72,16 @@ export const generateDashboardSuggestions = (lastCreationSummary: any, lang: 'en
 
 export const enhancePrompt = (prompt: string, context: string, lang: 'en' | 'ar'): Promise<PromptSuggestion[]> => {
     return invokeFunction('enhance-prompt', { prompt, context, lang });
+};
+
+export const generateAmbassadorFaces = (description: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ faces: string[] }> => {
+    return invokeFunction('generate-ambassador-faces', { description, brandPersona, lang });
+};
+
+export const generateAmbassadorProfile = (description: string, brandPersona: string, lang: 'en' | 'ar'): Promise<{ name: string; backstory: string; communicationStyle: string }> => {
+    return invokeFunction('generate-ambassador-profile', { description, brandPersona, lang });
+};
+
+export const saveAmbassador = (ambassadorData: Omit<VirtualAmbassador, 'id' | 'user_id' | 'faceImageUrl'> & { faceImageBase64: string }): Promise<VirtualAmbassador> => {
+    return invokeFunction('save-ambassador', { ambassadorData });
 };
