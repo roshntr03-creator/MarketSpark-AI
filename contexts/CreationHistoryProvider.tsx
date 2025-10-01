@@ -25,18 +25,32 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
     const fetchHistory = async () => {
       if (user) {
         try {
-          // Optimized query: Fetches the latest items without slow filters.
-          const { data, error } = await supabase
+          // --- Two-step query optimization to avoid timeouts on throttled databases ---
+          
+          // Step 1: Fetch only the IDs of the most recent items. This is very fast.
+          const { data: idData, error: idError } = await supabase
             .from('creations')
-            .select('id, user_id, tool, timestamp, result')
+            .select('id')
             .eq('user_id', user.id)
             .order('timestamp', { ascending: false })
             .limit(MAX_HISTORY_ITEMS);
 
+          if (idError) throw idError;
+          if (!idData || idData.length === 0) {
+            setHistory([]);
+            return;
+          }
+
+          // Step 2: Fetch the full data for only those specific IDs.
+          const ids = idData.map(item => item.id);
+          const { data, error } = await supabase
+            .from('creations')
+            .select('id, user_id, tool, timestamp, result')
+            .in('id', ids)
+            .order('timestamp', { ascending: false }); // Re-apply order
+
           if (error) throw error;
           
-          // Filter out null results on the client side to avoid slow DB queries.
-          // This is the correct, performant way to handle this.
           const validData = data ? data.filter(item => item.result != null) : [];
           
           const mappedHistory: CreationHistoryItem[] = validData.map((item: any) => ({
@@ -53,7 +67,6 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
           setHistory([]);
         }
       } else {
-        // Clear history when user logs out
         setHistory([]);
       }
     };
