@@ -8,12 +8,14 @@ import ImageUploader from '../components/ImageUploader';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
-import { startVideoGeneration, checkVideoGenerationStatus } from '../services/geminiService';
+import { startVideoGeneration, checkVideoGenerationStatus, downloadVideoFromProxy } from '../services/geminiService';
 import ErrorScreen from '../components/ErrorScreen';
 import type { GeneratedVideo } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
+import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -46,18 +48,29 @@ const VideoLoadingScreen: React.FC = () => {
     );
 };
 
+const FinalizingScreen: React.FC = () => (
+    <div className="text-center animate-fade-in flex flex-col items-center justify-center h-full">
+        <div className="loader mb-8"></div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-300">Finalizing Video...</h2>
+        <p className="text-md text-gray-600 dark:text-gray-400 max-w-md mt-2">Uploading to your storage. This may take a moment.</p>
+    </div>
+);
+
+
 const VideoGeneratorScreen: React.FC = () => {
     const { t, lang } = useTranslations();
     const { setVideoGenerationResult, setActiveTool } = useMarketingTools();
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
 
     const [prompt, setPrompt] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [clearUploader, setClearUploader] = useState(0);
     const [isPolling, setIsPolling] = useState(false);
+    const [isFinalizing, setIsFinalizing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [operation, setOperation] = useState<any | null>(null);
     
@@ -72,7 +85,6 @@ const VideoGeneratorScreen: React.FC = () => {
     }, [imageFile]);
 
     useEffect(() => {
-        // FIX: Replaced NodeJS.Timeout with a browser-compatible type for setTimeout's return value.
         let timeoutId: ReturnType<typeof setTimeout>;
 
         const poll = async (op: any) => {
@@ -84,23 +96,56 @@ const VideoGeneratorScreen: React.FC = () => {
                  setIsPolling(false);
             }
         };
-
-        if (isPolling && operation && !operation.done) {
-            timeoutId = setTimeout(() => poll(operation), 10000); // Poll every 10 seconds
-        } else if (operation && operation.done) {
-            setIsPolling(false);
-            if (operation.error) {
-                setError(`Video generation failed: ${operation.error.message}`);
+        
+        const finalizeVideo = async (uri: string) => {
+            if (!user) {
+                setError("User not authenticated for upload.");
                 return;
             }
-            if (operation.response?.generatedVideos?.[0]?.video?.uri) {
+            setIsFinalizing(true);
+            try {
+                const videoBlob = await downloadVideoFromProxy(uri);
+                const filePath = `${user.id}/${crypto.randomUUID()}.mp4`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('generated_creations')
+                    .upload(filePath, videoBlob, { contentType: 'video/mp4', upsert: false });
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('generated_creations')
+                    .getPublicUrl(filePath);
+                
+                if (!publicUrlData || !publicUrlData.publicUrl) {
+                    throw new Error("Could not get public URL for the uploaded video.");
+                }
+
                 const resultPayload: GeneratedVideo = {
-                    videoUri: operation.response.generatedVideos[0].video.uri,
+                    videoUri: publicUrlData.publicUrl,
                     prompt: prompt,
                 };
                 const creation = addCreation('video-generator', resultPayload);
                 setVideoGenerationResult({ result: resultPayload, creation });
                 incrementToolUsage('video-generator');
+            } catch (err) {
+                 setError(err instanceof Error ? err.message : 'An error occurred while finalizing the video.');
+            } finally {
+                setIsFinalizing(false);
+            }
+        };
+
+
+        if (isPolling && operation && !operation.done) {
+            timeoutId = setTimeout(() => poll(operation), 10000);
+        } else if (isPolling && operation && operation.done) {
+            setIsPolling(false);
+            if (operation.error) {
+                setError(`Video generation failed: ${operation.error.message}`);
+                return;
+            }
+            const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
+            if (videoUri) {
+                finalizeVideo(videoUri);
             } else {
                 setError("Video generation finished, but no video was returned. The request may have been refused.");
             }
@@ -108,7 +153,7 @@ const VideoGeneratorScreen: React.FC = () => {
 
         return () => clearTimeout(timeoutId);
 
-    }, [isPolling, operation, prompt, setVideoGenerationResult, incrementToolUsage, addCreation]);
+    }, [isPolling, operation, prompt, setVideoGenerationResult, incrementToolUsage, addCreation, user]);
 
     const runGenerateVideo = async () => {
         if (!prompt) {
@@ -142,7 +187,8 @@ const VideoGeneratorScreen: React.FC = () => {
     };
 
     if (isPolling) return <VideoLoadingScreen />;
-    if (error) return <ErrorScreen error={error} onRetry={runGenerateVideo} />;
+    if (isFinalizing) return <FinalizingScreen />;
+    if (error) return <ErrorScreen error={error} onRetry={() => { setError(null); setIsPolling(false); setIsFinalizing(false); }} />;
 
     return (
         <div className="animate-fade-in max-w-2xl mx-auto h-full flex flex-col">

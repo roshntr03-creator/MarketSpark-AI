@@ -18,6 +18,19 @@ const invokeFunction = async <T>(functionName: string, body: object): Promise<T>
     return data as T;
 };
 
+export const downloadVideoFromProxy = async (uri: string): Promise<Blob> => {
+    // We use the repurposed 'generate-ambassador-performance' function as our proxy
+    const { data, error } = await supabase.functions.invoke('generate-ambassador-performance', {
+        body: { uri },
+        responseType: 'blob' // This ensures the response is treated as a file blob
+    });
+    if (error) {
+        throw new Error(error.message || `Function download-video-proxy failed.`);
+    }
+    return data;
+};
+
+
 export const generateCampaign = (product: { name: string; description: string; targetAudience: string }, brandPersona: string, lang: 'en' | 'ar'): Promise<Campaign> => {
     return invokeFunction('generate-campaign', { product, brandPersona, lang });
 };

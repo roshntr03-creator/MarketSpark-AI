@@ -3,17 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 // deno-lint-ignore-file
-declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ai } from '../_shared/gemini.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-
-// Admin client to bypass RLS for storage upload
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-);
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
@@ -23,61 +15,9 @@ serve(async (req) => {
     try {
         const { operation } = await req.json();
 
+        // This function now ONLY polls the operation status from the Gemini API.
+        // It does not handle any file downloading or uploading to prevent server timeouts.
         const updatedOperation = await ai.operations.getVideosOperation({ operation });
-        
-        // If the Gemini operation finished with an error, return it to the client to handle.
-        if (updatedOperation.done && updatedOperation.error) {
-            return new Response(JSON.stringify(updatedOperation), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
-            });
-        }
-
-        // If the video is ready, download it from Google, upload it to Supabase Storage,
-        // and replace the temporary Google URI with a permanent public Supabase URL.
-        if (updatedOperation.done && updatedOperation.response?.generatedVideos?.[0]?.video?.uri) {
-            const apiKey = Deno.env.get("API_KEY");
-            if (!apiKey) {
-                throw new Error("API_KEY environment variable not set on server.");
-            }
-            
-            const originalUri = updatedOperation.response.generatedVideos[0].video.uri;
-
-            // Fetch video from Google's temporary URI
-            const videoResponse = await fetch(`${originalUri}&key=${apiKey}`);
-            if (!videoResponse.ok) {
-                throw new Error(`Failed to fetch generated video from Google: ${videoResponse.status} ${videoResponse.statusText}`);
-            }
-
-            // Get video data as a buffer
-            const videoArrayBuffer = await videoResponse.arrayBuffer();
-            const videoMimeType = videoResponse.headers.get('Content-Type') || 'video/mp4';
-            const filePath = `videos/${crypto.randomUUID()}.mp4`;
-
-            // Upload to Supabase Storage
-            const { error: uploadError } = await supabaseAdmin.storage
-              .from('generated_creations') // Assumes a public bucket named 'generated_creations' exists
-              .upload(filePath, videoArrayBuffer, {
-                contentType: videoMimeType,
-                upsert: false,
-              });
-
-            if (uploadError) {
-                throw new Error(`Failed to upload video to storage: ${uploadError.message}`);
-            }
-
-            // Get the public URL for the newly uploaded file
-            const { data: publicUrlData } = supabaseAdmin.storage
-              .from('generated_creations')
-              .getPublicUrl(filePath);
-
-            if (!publicUrlData || !publicUrlData.publicUrl) {
-                throw new Error("Could not get public URL for the uploaded video.");
-            }
-
-            // Replace the URI in the operation object with the public Supabase URL
-            updatedOperation.response.generatedVideos[0].video.uri = publicUrlData.publicUrl;
-        }
 
         return new Response(JSON.stringify(updatedOperation), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

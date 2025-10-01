@@ -6,11 +6,13 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
-import { startVideoGeneration, checkVideoGenerationStatus } from '../services/geminiService';
+import { startVideoGeneration, checkVideoGenerationStatus, downloadVideoFromProxy } from '../services/geminiService';
 import ErrorScreen from '../components/ErrorScreen';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
+import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
 import type { GeneratedVideo } from '../types/index';
 import { avatars } from '../lib/avatars';
 import type { translations } from '../lib/translations';
@@ -48,6 +50,15 @@ const VideoLoadingScreen: React.FC = () => {
     );
 };
 
+const FinalizingScreen: React.FC = () => (
+    <div className="text-center animate-fade-in flex flex-col items-center justify-center h-full py-16">
+        <div className="loader mb-8"></div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-300">Finalizing Video...</h2>
+        <p className="text-md text-gray-600 dark:text-gray-400 max-w-md mt-2">Uploading to your storage. This may take a moment.</p>
+    </div>
+);
+
+
 const voiceStyleOptions: Record<string, { en: string, tKey: keyof typeof translations.en }> = {
     friendly: { en: 'Friendly', tKey: 'styleFriendly' },
     confident: { en: 'Confident', tKey: 'styleConfident' },
@@ -67,6 +78,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
 
     const [step, setStep] = useState(1);
     const [script, setScript] = useState('');
@@ -75,6 +87,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
     const [selectedAvatarIndex, setSelectedAvatarIndex] = useState<number | null>(null);
 
     const [isPolling, setIsPolling] = useState(false);
+    const [isFinalizing, setIsFinalizing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [operation, setOperation] = useState<any | null>(null);
 
@@ -91,22 +104,54 @@ const UGCVideoGeneratorScreen: React.FC = () => {
             }
         };
 
-        if (isPolling && operation && !operation.done) {
-            timeoutId = setTimeout(() => poll(operation), 10000); // Poll every 10 seconds
-        } else if (operation && operation.done) {
-            setIsPolling(false);
-            if (operation.error) {
-                setError(`Video generation failed: ${operation.error.message}`);
+        const finalizeVideo = async (uri: string) => {
+            if (!user) {
+                setError("User not authenticated for upload.");
                 return;
             }
-            if (operation.response?.generatedVideos?.[0]?.video?.uri) {
+            setIsFinalizing(true);
+            try {
+                const videoBlob = await downloadVideoFromProxy(uri);
+                const filePath = `${user.id}/${crypto.randomUUID()}.mp4`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('generated_creations')
+                    .upload(filePath, videoBlob, { contentType: 'video/mp4', upsert: false });
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('generated_creations')
+                    .getPublicUrl(filePath);
+                
+                if (!publicUrlData || !publicUrlData.publicUrl) {
+                    throw new Error("Could not get public URL for the uploaded video.");
+                }
+
                 const resultPayload: GeneratedVideo = {
-                    videoUri: operation.response.generatedVideos[0].video.uri,
+                    videoUri: publicUrlData.publicUrl,
                     prompt: script, // Use script as the prompt for context
                 };
                 const creation = addCreation('virtual-ambassador-generator', resultPayload);
                 setVideoGenerationResult({ result: resultPayload, creation });
                 incrementToolUsage('virtual-ambassador-generator');
+            } catch (err) {
+                 setError(err instanceof Error ? err.message : 'An error occurred while finalizing the video.');
+            } finally {
+                setIsFinalizing(false);
+            }
+        };
+
+        if (isPolling && operation && !operation.done) {
+            timeoutId = setTimeout(() => poll(operation), 10000);
+        } else if (isPolling && operation && operation.done) {
+            setIsPolling(false);
+            if (operation.error) {
+                setError(`Video generation failed: ${operation.error.message}`);
+                return;
+            }
+            const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
+            if (videoUri) {
+                finalizeVideo(videoUri);
             } else {
                 setError("Video generation finished, but no video was returned. The request may have been refused or the prompt was unsafe.");
             }
@@ -114,7 +159,7 @@ const UGCVideoGeneratorScreen: React.FC = () => {
 
         return () => clearTimeout(timeoutId);
 
-    }, [isPolling, operation, script, setVideoGenerationResult, incrementToolUsage, addCreation]);
+    }, [isPolling, operation, script, setVideoGenerationResult, incrementToolUsage, addCreation, user]);
 
     const handleGenerateVideo = async () => {
         if (selectedAvatarIndex === null || !script) {
@@ -133,8 +178,6 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         const fullPrompt = `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${avatarDescription}. They are speaking directly to the camera in a ${selectedBackgroundEn}. Their tone is ${selectedVoiceStyleEn}. They are saying the following script in ${audioLanguage}: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${audioLanguage}.`;
 
         try {
-            // By passing 'undefined' for the image, we force text-to-video generation.
-            // This avoids API errors caused by the low-resolution avatar preview images.
             const initialOp = await startVideoGeneration(fullPrompt, undefined, brandPersona, lang);
             setOperation(initialOp);
         } catch (err) {
@@ -150,7 +193,9 @@ const UGCVideoGeneratorScreen: React.FC = () => {
     ];
 
     if (isPolling) return <VideoLoadingScreen />;
-    if (error) return <ErrorScreen error={error} onRetry={() => { setError(null); setIsPolling(false); }} />;
+    if (isFinalizing) return <FinalizingScreen />;
+    if (error) return <ErrorScreen error={error} onRetry={() => { setError(null); setIsPolling(false); setIsFinalizing(false); }} />;
+
 
     return (
         <div className="animate-fade-in max-w-4xl mx-auto h-full flex flex-col">

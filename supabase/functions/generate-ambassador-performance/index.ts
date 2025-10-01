@@ -3,40 +3,47 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 // deno-lint-ignore-file
+// This function has been repurposed to be a secure video download proxy.
+declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { ai } from '../_shared/gemini.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  try {
-    const { profile, content, lang } = await req.json();
-
-    const systemInstruction = lang === 'ar'
-      ? `أنت تتصرف كسفير علامة تجارية افتراضي. ملفك الشخصي هو كما يلي: ${JSON.stringify(profile)}. أعطاك المستخدم المحتوى الأولي التالي: "${content}". أعد كتابة هذا المحتوى وقدمه كما لو كنت ستقدمه في حملة تسويقية (على سبيل المثال، منشور على وسائل التواصل الاجتماعي، أو نص فيديو قصير). تجسد شخصيتك وأسلوب تواصلك وصوتك بالكامل. يجب أن يكون الناتج هو النص النهائي المصقول فقط، بدون أي تعليقات إضافية.`
-      : `You are acting as an AI virtual brand ambassador. Your profile is as follows: ${JSON.stringify(profile)}. A user has given you the following rough content: "${content}". Rewrite and present this content as if you were delivering it for a marketing campaign (e.g., a social media post, a short video script). Fully embody your character, communication style, and voice. The output should be the final, polished text only, with no extra commentary.`;
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: "Here is the content I need you to perform: " + content, // The actual content is passed here
-        config: {
-            systemInstruction,
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
+    }
+    try {
+        const { uri } = await req.json();
+        if (!uri) {
+            throw new Error("Missing 'uri' parameter.");
         }
-    });
 
-    const performanceText = response.text;
+        const apiKey = Deno.env.get("API_KEY");
+        if (!apiKey) {
+            throw new Error("API_KEY environment variable not set on server.");
+        }
+        
+        // Fetch the video from Google's temporary URL using the secret API key
+        const videoResponse = await fetch(`${uri}&key=${apiKey}`);
+        if (!videoResponse.ok || !videoResponse.body) {
+            throw new Error(`Failed to fetch video from Google: ${videoResponse.status} ${videoResponse.statusText}`);
+        }
 
-    return new Response(JSON.stringify({ performanceText }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
-  }
+        // Stream the video file directly back to the client as the response body
+        return new Response(videoResponse.body, {
+            headers: {
+                ...corsHeaders,
+                'Content-Type': videoResponse.headers.get('Content-Type') || 'video/mp4',
+                'Content-Length': videoResponse.headers.get('Content-Length') || '',
+            },
+            status: 200,
+        });
+
+    } catch (error) {
+        console.error("Error in download-video-proxy:", error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+        });
+    }
 });
