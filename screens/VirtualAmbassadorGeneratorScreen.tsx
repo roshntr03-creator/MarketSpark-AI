@@ -12,7 +12,8 @@ import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
 import type { GeneratedVideo } from '../types/index';
-import { avatars } from '../lib/avatars'; // Placeholder for avatar library
+import { avatars } from '../lib/avatars';
+import type { translations } from '../lib/translations';
 
 const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; }> = ({ currentStep, totalSteps }) => (
     <div className="flex justify-center items-center gap-2 mb-6">
@@ -47,6 +48,18 @@ const VideoLoadingScreen: React.FC = () => {
     );
 };
 
+const voiceStyleOptions: Record<string, { en: string, tKey: keyof typeof translations.en }> = {
+    friendly: { en: 'Friendly', tKey: 'styleFriendly' },
+    confident: { en: 'Confident', tKey: 'styleConfident' },
+    informative: { en: 'Informative', tKey: 'styleInformative' },
+};
+
+const backgroundOptions: Record<string, { en: string, tKey: keyof typeof translations.en }> = {
+    homeOffice: { en: 'Cozy Home Office', tKey: 'bgHomeOffice' },
+    studio: { en: 'Minimalist Studio', tKey: 'bgStudio' },
+    modernCafe: { en: 'Modern Cafe', tKey: 'bgModernCafe' },
+};
+
 
 const UGCVideoGeneratorScreen: React.FC = () => {
     const { t, lang } = useTranslations();
@@ -57,8 +70,8 @@ const UGCVideoGeneratorScreen: React.FC = () => {
 
     const [step, setStep] = useState(1);
     const [script, setScript] = useState('');
-    const [voiceStyle, setVoiceStyle] = useState(t.styleFriendly);
-    const [background, setBackground] = useState(t.bgHomeOffice);
+    const [voiceStyleKey, setVoiceStyleKey] = useState('friendly');
+    const [backgroundKey, setBackgroundKey] = useState('homeOffice');
     const [selectedAvatarIndex, setSelectedAvatarIndex] = useState<number | null>(null);
 
     const [isPolling, setIsPolling] = useState(false);
@@ -108,13 +121,12 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         setError(null);
 
         const selectedAvatar = avatars[selectedAvatarIndex];
-        const avatarDescription = lang === 'ar' ? selectedAvatar.description_ar : selectedAvatar.description;
+        const avatarDescription = selectedAvatar.description; // Always use English description for model
         const audioLanguage = lang === 'ar' ? 'Arabic' : 'English';
+        const selectedVoiceStyleEn = voiceStyleOptions[voiceStyleKey].en;
+        const selectedBackgroundEn = backgroundOptions[backgroundKey].en;
 
-        const fullPrompt = lang === 'ar'
-            ? `أنشئ فيديو UGC رأسي بنسبة 9:16 يظهر شخصًا واقعيًا. الشخص هو: ${avatarDescription}. يتحدث مباشرة إلى الكاميرا في ${background}. نبرة صوته ${voiceStyle}. يقول النص التالي: "${script}". يجب أن يبدو الفيديو أصيلًا، كشخص حقيقي يشارك تجربته. يجب أن يكون الصوت كلامًا واضحًا وطبيعيًا باللغة العربية.`
-            : `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${avatarDescription}. They are speaking directly to the camera in a ${background}. Their tone is ${voiceStyle}. They are saying the following script: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${audioLanguage}.`;
-
+        const fullPrompt = `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${avatarDescription}. They are speaking directly to the camera in a ${selectedBackgroundEn}. Their tone is ${selectedVoiceStyleEn}. They are saying the following script in ${audioLanguage}: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${audioLanguage}.`;
 
         try {
             const imagePayload = {
@@ -165,18 +177,18 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label htmlFor="voiceStyle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.voiceStyleLabel}</label>
-                                <select id="voiceStyle" value={voiceStyle} onChange={(e) => setVoiceStyle(e.target.value)} className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition text-lg">
-                                    <option>{t.styleFriendly}</option>
-                                    <option>{t.styleConfident}</option>
-                                    <option>{t.styleInformative}</option>
+                                <select id="voiceStyle" value={voiceStyleKey} onChange={(e) => setVoiceStyleKey(e.target.value)} className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition text-lg">
+                                    {Object.entries(voiceStyleOptions).map(([key, option]) => (
+                                        <option key={key} value={key}>{t[option.tKey]}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
                                 <label htmlFor="background" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.backgroundLabel}</label>
-                                <select id="background" value={background} onChange={(e) => setBackground(e.target.value)} className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition text-lg">
-                                    <option>{t.bgHomeOffice}</option>
-                                    <option>{t.bgStudio}</option>
-                                    <option>{t.bgModernCafe}</option>
+                                <select id="background" value={backgroundKey} onChange={(e) => setBackgroundKey(e.target.value)} className="w-full bg-white/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition text-lg">
+                                    {Object.entries(backgroundOptions).map(([key, option]) => (
+                                        <option key={key} value={key}>{t[option.tKey]}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -192,12 +204,30 @@ const UGCVideoGeneratorScreen: React.FC = () => {
                         <p className="text-md text-gray-600 dark:text-gray-400 mb-6">{t.step2UgcSubtitle}</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {avatars.map((avatar, index) => (
-                                <div key={avatar.id} onClick={() => setSelectedAvatarIndex(index)} className={`rounded-lg overflow-hidden cursor-pointer border-4 transition-all ${selectedAvatarIndex === index ? 'border-indigo-500 scale-105' : 'border-transparent hover:border-indigo-400'}`}>
-                                    <img src={avatar.dataUri} alt={lang === 'ar' ? avatar.description_ar : avatar.description} className="w-full h-full object-cover" />
-                                </div>
+                                <button
+                                    key={avatar.id}
+                                    onClick={() => setSelectedAvatarIndex(index)}
+                                    className={`group block w-full rounded-xl text-left transition-all duration-200 border-2 ${
+                                        selectedAvatarIndex === index
+                                            ? 'border-indigo-500'
+                                            : 'border-transparent hover:border-indigo-300'
+                                    }`}
+                                    aria-pressed={selectedAvatarIndex === index}
+                                >
+                                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+                                        <img
+                                            src={avatar.dataUri}
+                                            alt={lang === 'ar' ? avatar.description_ar : avatar.description}
+                                            className="w-full rounded-md object-cover aspect-[3/4] group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                        <p className="mt-2 text-xs text-center text-gray-600 dark:text-gray-400 h-12">
+                                            {lang === 'ar' ? avatar.description_ar : avatar.description}
+                                        </p>
+                                    </div>
+                                </button>
                             ))}
                         </div>
-                        <button onClick={handleGenerateVideo} disabled={selectedAvatarIndex === null} className="mt-6 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 disabled:opacity-50 text-lg">
+                        <button onClick={handleGenerateVideo} disabled={selectedAvatarIndex === null} className="mt-8 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 disabled:opacity-50 text-lg">
                             {t.generateUgcVideoButton}
                         </button>
                     </div>

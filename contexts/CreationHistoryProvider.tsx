@@ -29,13 +29,21 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
             .from('creations')
             .select('*')
             .eq('user_id', user.id)
-            .order('timestamp', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(MAX_HISTORY_ITEMS);
 
           if (error) throw error;
-          setHistory(data as CreationHistoryItem[]);
+          
+          const mappedHistory: CreationHistoryItem[] = data.map((item: any) => ({
+            id: item.id,
+            user_id: item.user_id,
+            tool: item.tool,
+            timestamp: new Date(item.created_at).getTime(),
+            result: item.result,
+          }));
+
+          setHistory(mappedHistory);
         } catch (error) {
-          // FIX: Log a specific error message instead of the generic [object Object].
           console.error("Error fetching creation history:", error instanceof Error ? error.message : String(error));
           setHistory([]);
         }
@@ -66,7 +74,7 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
     
     const timestampString = new Date(creationToStore.timestamp).toLocaleString();
 
-    if (tool === 'video-generator') {
+    if (tool === 'video-generator' || tool === 'virtual-ambassador-generator') {
         (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
     } else if (tool === 'image-generator') {
         (creationToStore.result as GeneratedImage).image = `Image generated on ${timestampString}`;
@@ -75,8 +83,6 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
         editedImageResult.original = `Original image from ${timestampString}`;
         editedImageResult.edited = `Edited image from ${timestampString}`;
     } else if (tool === 'workflow') {
-        // FIX: Add a type guard to handle different workflow result structures correctly,
-        // preventing a crash when saving BlogPostRepurposingWorkflowResult.
         const workflowResult = creationToStore.result as WorkflowResult;
         if ('images' in workflowResult && Array.isArray(workflowResult.images)) {
              (workflowResult as NewProductLaunchWorkflowResult).images.forEach((img) => {
@@ -89,8 +95,7 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
         }
     }
     
-    // Optimistically update the local UI history with the modified (storage-safe) version.
-    setHistory(prevHistory => [creationToStore, ...prevHistory].slice(0, MAX_HISTORY_ITEMS));
+    setHistory(prevHistory => [newCreation, ...prevHistory].slice(0, MAX_HISTORY_ITEMS));
 
     // Asynchronously insert the storage-safe version into the database.
     const insertToDB = async () => {
@@ -98,7 +103,6 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
             const { error } = await supabase.from('creations').insert({
                 user_id: creationToStore.user_id,
                 tool: creationToStore.tool,
-                timestamp: new Date(creationToStore.timestamp).toISOString(),
                 result: creationToStore.result,
             });
             if (error) throw error;
