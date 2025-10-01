@@ -39,7 +39,8 @@ const NewProductLaunchWorkflowResultsScreen: React.FC<NewProductLaunchWorkflowRe
                 scheduled_date_time: scheduledDate.toISOString(),
                 title: `${campaign.campaign.productName} - Social Post`,
                 platform: post.platform,
-                contentIdea: post.content,
+                // FIX: Corrected property name from 'contentIdea' to 'content_idea' to match the PlannerItem type.
+                content_idea: post.content,
                 format: 'Social Media Post with Image',
             });
         });

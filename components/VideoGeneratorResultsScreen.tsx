@@ -38,18 +38,16 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             setIsLoadingVideo(true);
             setVideoError(null);
             try {
-                // The backend now returns a data URI. We can use it directly for the src
-                // and fetch it to create a blob for the download functionality.
-                if (videoUri.startsWith('data:')) {
-                    setVideoSrc(videoUri); 
-                    
-                    const response = await fetch(videoUri);
-                    const blob = await response.blob();
-                    setVideoBlob(blob);
-                } else {
-                    // Fallback for unexpected formats, though it shouldn't happen
-                    throw new Error("Received an unexpected video URI format.");
+                // The backend now returns a direct public URL.
+                // We use it for playback and also fetch it as a blob for download functionality.
+                setVideoSrc(videoUri); 
+                
+                const response = await fetch(videoUri);
+                 if (!response.ok) {
+                    throw new Error(`Failed to fetch video file: ${response.status} ${response.statusText}`);
                 }
+                const blob = await response.blob();
+                setVideoBlob(blob);
             } catch (error) {
                 console.error("Failed to load video for playback:", error);
                 setVideoError(error instanceof Error ? error.message : "Could not load video.");

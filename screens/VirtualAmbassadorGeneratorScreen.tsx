@@ -125,15 +125,13 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         const audioLanguage = lang === 'ar' ? 'Arabic' : 'English';
         const selectedVoiceStyleEn = voiceStyleOptions[voiceStyleKey].en;
         const selectedBackgroundEn = backgroundOptions[backgroundKey].en;
-
+        
         const fullPrompt = `Create a 9:16 vertical UGC-style video featuring a realistic person. The person is: ${avatarDescription}. They are speaking directly to the camera in a ${selectedBackgroundEn}. Their tone is ${selectedVoiceStyleEn}. They are saying the following script in ${audioLanguage}: "${script}". The video should feel authentic, like a real person sharing their experience. The audio must be clear, natural-sounding speech in ${audioLanguage}.`;
 
         try {
-            const imagePayload = {
-                base64: selectedAvatar.base64,
-                mimeType: selectedAvatar.mimeType,
-            };
-            const initialOp = await startVideoGeneration(fullPrompt, imagePayload, brandPersona, lang);
+            // By passing 'undefined' for the image, we force text-to-video generation.
+            // This avoids API errors caused by the low-resolution avatar preview images.
+            const initialOp = await startVideoGeneration(fullPrompt, undefined, brandPersona, lang);
             setOperation(initialOp);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');
