@@ -8,6 +8,7 @@ import { useBrand } from '../contexts/BrandProvider';
 import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob } from '@google/genai';
 import { MicrophoneIcon, StopCircleIcon } from '../components/icons';
 import type { TranscriptEntry } from '../types/index';
+import { supabase } from '../lib/supabaseClient';
 
 // --- Audio Helper Functions ---
 function encode(bytes: Uint8Array): string {
@@ -65,6 +66,7 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
     const { t } = useTranslations();
     const { brandPersona } = useBrand();
 
+    const [ai, setAi] = useState<GoogleGenAI | null>(null);
     const [connectionState, setConnectionState] = useState<ConnectionState>("idle");
     const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
     const [statusText, setStatusText] = useState(t.voiceCoachStart);
@@ -80,7 +82,24 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
     const currentInputTranscriptionRef = useRef('');
     const currentOutputTranscriptionRef = useRef('');
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    useEffect(() => {
+        const fetchApiKeyAndInit = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke('get-api-key');
+                if (error) throw error;
+                if (data.apiKey) {
+                    setAi(new GoogleGenAI({ apiKey: data.apiKey }));
+                } else {
+                    throw new Error("API key not returned from function.");
+                }
+            } catch (err) {
+                console.error("Failed to fetch API key:", err);
+                setConnectionState("error");
+            }
+        };
+
+        fetchApiKeyAndInit();
+    }, []);
 
     const stopSession = useCallback(() => {
         console.log("Stopping session...");
@@ -107,12 +126,17 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
     }, []);
 
     const startSession = useCallback(async () => {
+        if (!ai) {
+            console.error("AI client not initialized.");
+            setConnectionState("error");
+            return;
+        }
+
         setConnectionState("connecting");
         setTranscript([]); // Clear transcript on new session
 
         try {
             // Initialize Audio Contexts
-            // FIX: Cast window to `any` to support `webkitAudioContext` for older browser compatibility without TypeScript errors.
             const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             inputAudioContextRef.current = inputAudioContext;
@@ -209,9 +233,13 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
             console.error("Failed to start session:", error);
             setConnectionState("error");
         }
-    }, [ai.live, brandPersona, stopSession]);
+    }, [ai, brandPersona, stopSession]);
 
     const toggleSession = () => {
+        if (!ai) {
+             setStatusText("Initializing...");
+             return;
+        }
         if (connectionState === "idle" || connectionState === "error") {
             startSession();
         } else {
@@ -220,13 +248,17 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
     };
 
     useEffect(() => {
+        if (!ai) {
+            setStatusText(t.voiceCoachConnecting);
+            return;
+        }
         switch (connectionState) {
             case "idle": setStatusText(t.voiceCoachStart); break;
             case "connecting": setStatusText(t.voiceCoachConnecting); break;
             case "connected": setStatusText(t.voiceCoachListening); break;
             case "error": setStatusText("Error. Tap to retry."); break;
         }
-    }, [connectionState, t]);
+    }, [connectionState, t, ai]);
     
     // Cleanup on unmount
     useEffect(() => {
@@ -269,7 +301,7 @@ const VoiceCoachScreen: React.FC<VoiceCoachScreenProps> = ({ onClose }) => {
             <div className="flex-shrink-0 p-6 text-center border-t border-white/10">
                 <button
                     onClick={toggleSession}
-                    disabled={connectionState === 'connecting'}
+                    disabled={connectionState === 'connecting' || !ai}
                     className={`relative w-20 h-20 rounded-full transition-colors duration-300 flex items-center justify-center mx-auto disabled:opacity-50
                         ${connectionState === 'connected' ? 'bg-red-500 hover:bg-red-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
                 >

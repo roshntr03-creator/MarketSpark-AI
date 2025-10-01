@@ -249,8 +249,9 @@ const MarketingTip: React.FC = () => {
 
     const mostUsedTool = useMemo(() => {
         if (Object.keys(rawStats).length === 0) return null;
-        // FIX: The values `a` and `b` from `rawStats` can be undefined. Defaulting to 0 prevents a runtime error during the sort comparison.
-        return Object.entries(rawStats).sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))[0][0] as Tool;
+        // FIX: The values from Object.entries(rawStats) can be undefined or inferred as 'unknown',
+        // so we use a `typeof` check to ensure the sort function performs a valid numeric comparison.
+        return Object.entries(rawStats).sort(([, a], [, b]) => (typeof b === 'number' ? b : 0) - (typeof a === 'number' ? a : 0))[0][0] as Tool;
     }, [rawStats]);
 
     useEffect(() => {
