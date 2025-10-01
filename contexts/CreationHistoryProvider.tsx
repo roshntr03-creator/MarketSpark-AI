@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo, GeneratedImage, EditedImage, WorkflowResult } from '../types/index';
+import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo, GeneratedImage, EditedImage, WorkflowResult, NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult } from '../types/index';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 
@@ -35,7 +35,8 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
           if (error) throw error;
           setHistory(data as CreationHistoryItem[]);
         } catch (error) {
-          console.error("Error fetching creation history:", error);
+          // FIX: Log a specific error message instead of the generic [object Object].
+          console.error("Error fetching creation history:", error instanceof Error ? error.message : String(error));
           setHistory([]);
         }
       } else {
@@ -74,10 +75,18 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
         editedImageResult.original = `Original image from ${timestampString}`;
         editedImageResult.edited = `Edited image from ${timestampString}`;
     } else if (tool === 'workflow') {
+        // FIX: Add a type guard to handle different workflow result structures correctly,
+        // preventing a crash when saving BlogPostRepurposingWorkflowResult.
         const workflowResult = creationToStore.result as WorkflowResult;
-        workflowResult.images.forEach((img) => {
-            img.image = `Image for post generated on ${timestampString}`;
-        });
+        if ('images' in workflowResult && Array.isArray(workflowResult.images)) {
+             (workflowResult as NewProductLaunchWorkflowResult).images.forEach((img) => {
+                img.image = `Image for post generated on ${timestampString}`;
+            });
+        } else if ('carouselImages' in workflowResult && Array.isArray(workflowResult.carouselImages)) {
+             (workflowResult as BlogPostRepurposingWorkflowResult).carouselImages.forEach((img) => {
+                img.image = `Image for post generated on ${timestampString}`;
+            });
+        }
     }
     
     // Optimistically update the local UI history with the modified (storage-safe) version.

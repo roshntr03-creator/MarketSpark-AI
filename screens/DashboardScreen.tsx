@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Changed 'VideoGenerator' to the correct exported type 'GeneratedVideo'.
-import type { Screen, CreationHistoryItem, Tool, Campaign, SocialPost, GeneratedImage, GeneratedVideo, DashboardSuggestion, CreationResult, WorkflowResult, EditedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit } from '../types/index';
+import type { Screen, CreationHistoryItem, Tool, Campaign, SocialPost, GeneratedImage, GeneratedVideo, DashboardSuggestion, CreationResult, WorkflowResult, EditedImage, CompetitorAnalysis, ContentRepurposingResult, ContentStrategy, AssetKit, NewProductLaunchWorkflowResult } from '../types/index';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
@@ -27,9 +27,10 @@ const createCreationSummary = (item: CreationHistoryItem) => {
 
     const result = item.result;
 
-    if ('socialPosts' in result && 'campaign' in result) { // WorkflowResult
-         const workflow = result as WorkflowResult;
-        summary.result = { workflow: 'New Product Launch', productName: workflow.campaign.campaign.productName };
+    // FIX: The 'in' operator correctly narrows the type of 'result' to NewProductLaunchWorkflowResult,
+    // so we can access 'campaign' directly without an unsafe cast.
+    if ('campaign' in result && 'socialPosts' in result) { // NewProductLaunchWorkflowResult
+        summary.result = { workflow: 'New Product Launch', productName: result.campaign.campaign.productName };
     } else if ('campaign' in result) { // Campaign
         summary.result = { productName: (result as Campaign).campaign.productName, tagline: (result as Campaign).campaign.tagline };
     } else if (Array.isArray(result) && result.length > 0 && 'platform' in result[0]) { // SocialPost[]
@@ -81,9 +82,11 @@ const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, classNam
 const getCreationDetails = (item: CreationHistoryItem): string => {
     const result = item.result;
 
+    // FIX: The 'in' operator correctly narrows the type of 'result' to NewProductLaunchWorkflowResult,
+    // allowing direct and safe access to the 'campaign' property.
     // Workflow
     if ('socialPosts' in result && 'campaign' in result) { 
-        return `Workflow: ${(result as WorkflowResult).campaign.campaign.productName}`;
+        return `Workflow: ${(result as NewProductLaunchWorkflowResult).campaign.campaign.productName}`;
     }
     // Campaign
     if ('campaign' in result) {

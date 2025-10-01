@@ -29,10 +29,11 @@ const PlannerCard: React.FC<{ item: PlannerItem; creationItem: CreationHistoryIt
     }
 
     if (creation) {
-         if ('socialPosts' in creation && 'campaign' in creation) { // WorkflowResult
-            const workflowResult = creation as WorkflowResult;
-            title = `${workflowResult.campaign.campaign.productName} Workflow`;
-            description = workflowResult.campaign.campaign.tagline;
+        // FIX: The 'in' operator correctly narrows 'creation' to NewProductLaunchWorkflowResult.
+        // Accessing 'campaign' directly on 'creation' is now type-safe.
+         if ('socialPosts' in creation && 'campaign' in creation) { // NewProductLaunchWorkflowResult
+            title = `${creation.campaign.campaign.productName} Workflow`;
+            description = creation.campaign.campaign.tagline;
         } else if ('campaign' in creation) { // Campaign
             const campaign = creation as Campaign;
             title = `${campaign.campaign.productName} Campaign`;
