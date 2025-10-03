@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
-import { startVideoGeneration, checkVideoGenerationStatus } from '../services/geminiService';
+import { startVideoGeneration, checkVideoGenerationStatus, downloadVideoFromProxy } from '../services/geminiService';
 import ErrorScreen from '../components/ErrorScreen';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthProvider';
 import type { GeneratedVideo } from '../types/index';
 import { avatars } from '../lib/avatars';
 import type { translations } from '../lib/translations';
+import { supabase } from '../lib/supabaseClient';
 
 const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; }> = ({ currentStep, totalSteps }) => (
     <div className="flex justify-center items-center gap-2 mb-6">
@@ -80,6 +81,39 @@ const UGCVideoGeneratorScreen: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [operation, setOperation] = useState<any | null>(null);
 
+    const finalizeVideo = async (tempUri: string) => {
+        if (!user) {
+            throw new Error("User must be authenticated to save video.");
+        }
+        try {
+            const blob = await downloadVideoFromProxy(tempUri);
+            const filePath = `${user.id}/${crypto.randomUUID()}.mp4`;
+            const { error: uploadError } = await supabase.storage
+                .from('generated_creations')
+                .upload(filePath, blob, { contentType: 'video/mp4' });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('generated_creations')
+                .getPublicUrl(filePath);
+
+            if (!publicUrl) throw new Error("Could not get public URL for the video.");
+
+            const resultPayload: GeneratedVideo = {
+                videoUri: publicUrl,
+                prompt: script, // Use script as the prompt for context
+            };
+            const creation = addCreation('virtual-ambassador-generator', resultPayload);
+            setVideoGenerationResult({ result: resultPayload, creation });
+            incrementToolUsage('virtual-ambassador-generator');
+        } catch (err) {
+            setError(err instanceof Error ? `Failed to finalize video: ${err.message}` : 'An unknown error occurred while saving the video.');
+        } finally {
+            setIsPolling(false);
+        }
+    };
+
      useEffect(() => {
         let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -96,29 +130,23 @@ const UGCVideoGeneratorScreen: React.FC = () => {
         if (isPolling && operation && !operation.done) {
             timeoutId = setTimeout(() => poll(operation), 10000);
         } else if (isPolling && operation && operation.done) {
-            setIsPolling(false);
             if (operation.error) {
                 setError(`Video generation failed: ${operation.error.message}`);
+                setIsPolling(false);
                 return;
             }
             const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
             if (videoUri) {
-                const resultPayload: GeneratedVideo = {
-                    videoUri: videoUri,
-                    prompt: script, // Use script as the prompt for context
-                };
-                const creation = addCreation('virtual-ambassador-generator', resultPayload);
-                setVideoGenerationResult({ result: resultPayload, creation });
-                incrementToolUsage('virtual-ambassador-generator');
-
+                finalizeVideo(videoUri);
             } else {
                 setError("Video generation finished, but no video was returned. The request may have been refused or the prompt was unsafe.");
+                setIsPolling(false);
             }
         }
 
         return () => clearTimeout(timeoutId);
 
-    }, [isPolling, operation, script, setVideoGenerationResult, incrementToolUsage, addCreation, user]);
+    }, [isPolling, operation]);
 
     const handleGenerateVideo = async () => {
         if (selectedAvatarIndex === null || !script) {

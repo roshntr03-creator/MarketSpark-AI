@@ -8,12 +8,10 @@ import { useTranslations } from '../contexts/LanguageProvider';
 import ToolHeader from './ToolHeader';
 import ScheduleModal from './ScheduleModal';
 import { PlusCircleIcon } from './icons';
-import { downloadVideoFromProxy } from '../services/geminiService';
 
 const VideoGeneratorResultsScreen: React.FC = () => {
     const { videoGenerationResult, setVideoGenerationResult } = useMarketingTools();
     const { t } = useTranslations();
-    const [isDownloading, setIsDownloading] = useState(false);
     const [isScheduling, setIsScheduling] = useState(false);
 
     if (!videoGenerationResult) {
@@ -27,29 +25,19 @@ const VideoGeneratorResultsScreen: React.FC = () => {
         setVideoGenerationResult(null);
     };
     
-    const handleDownload = async () => {
+    const handleDownload = () => {
         if (!videoUri) {
             alert("Video source is not available.");
             return;
         }
-        setIsDownloading(true);
-        try {
-            const blob = await downloadVideoFromProxy(videoUri);
-            const blobUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = blobUrl;
-            a.download = `generated-video-${Date.now()}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(blobUrl);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error("Download failed:", error);
-            alert(`Failed to download video. This might be a temporary issue. Error: ${error instanceof Error ? error.message : String(error)}`);
-        } finally {
-            setIsDownloading(false);
-        }
+        // Since videoUri is now a direct public URL, we can use a simple anchor link to download.
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = videoUri;
+        a.download = `generated-video-${Date.now()}.mp4`; 
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     return (
@@ -67,11 +55,11 @@ const VideoGeneratorResultsScreen: React.FC = () => {
                     <div className="w-full aspect-video rounded-lg bg-black flex items-center justify-center">
                         {videoUri ? (
                             <video 
+                                key={videoUri} // Use key to force re-render when src changes
                                 src={videoUri}
                                 controls 
                                 playsInline
                                 className="w-full h-full"
-                                crossOrigin="anonymous" // Attempt to mitigate CORS, may not always work
                             />
                         ) : (
                              <div className="text-center text-gray-400 p-4">
@@ -90,10 +78,10 @@ const VideoGeneratorResultsScreen: React.FC = () => {
                     </button>
                     <button 
                         onClick={handleDownload}
-                        disabled={isDownloading || !videoUri}
+                        disabled={!videoUri}
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isDownloading ? `${t.loadingTitle}...` : t.downloadVideo}
+                        {t.downloadVideo}
                     </button>
                 </div>
             

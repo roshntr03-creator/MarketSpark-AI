@@ -8,13 +8,14 @@ import ImageUploader from '../components/ImageUploader';
 import { useTranslations } from '../contexts/LanguageProvider';
 import { useMarketingTools } from '../contexts/MarketingToolsProvider';
 import { useUsageStats } from '../contexts/UsageStatsProvider';
-import { startVideoGeneration, checkVideoGenerationStatus } from '../services/geminiService';
+import { startVideoGeneration, checkVideoGenerationStatus, downloadVideoFromProxy } from '../services/geminiService';
 import ErrorScreen from '../components/ErrorScreen';
 import type { GeneratedVideo } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
 import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -62,6 +63,40 @@ const VideoGeneratorScreen: React.FC = () => {
     const [isPolling, setIsPolling] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [operation, setOperation] = useState<any | null>(null);
+
+    const finalizeVideo = async (tempUri: string) => {
+        if (!user) {
+            throw new Error("User must be authenticated to save video.");
+        }
+        try {
+            const blob = await downloadVideoFromProxy(tempUri);
+            const filePath = `${user.id}/${crypto.randomUUID()}.mp4`;
+            const { error: uploadError } = await supabase.storage
+                .from('generated_creations')
+                .upload(filePath, blob, { contentType: 'video/mp4' });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('generated_creations')
+                .getPublicUrl(filePath);
+
+            if (!publicUrl) throw new Error("Could not get public URL for the video.");
+
+            const resultPayload: GeneratedVideo = {
+                videoUri: publicUrl,
+                prompt: prompt,
+            };
+
+            const creation = addCreation('video-generator', resultPayload);
+            setVideoGenerationResult({ result: resultPayload, creation });
+            incrementToolUsage('video-generator');
+        } catch (err) {
+            setError(err instanceof Error ? `Failed to finalize video: ${err.message}` : 'An unknown error occurred while saving the video.');
+        } finally {
+            setIsPolling(false);
+        }
+    };
     
     useEffect(() => {
         if (!imageFile) {
@@ -89,28 +124,25 @@ const VideoGeneratorScreen: React.FC = () => {
         if (isPolling && operation && !operation.done) {
             timeoutId = setTimeout(() => poll(operation), 10000);
         } else if (isPolling && operation && operation.done) {
-            setIsPolling(false);
             if (operation.error) {
                 setError(`Video generation failed: ${operation.error.message}`);
+                setIsPolling(false);
                 return;
             }
             const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
             if (videoUri) {
-                const resultPayload: GeneratedVideo = {
-                    videoUri: videoUri,
-                    prompt: prompt,
-                };
-                const creation = addCreation('video-generator', resultPayload);
-                setVideoGenerationResult({ result: resultPayload, creation });
-                incrementToolUsage('video-generator');
+                // Instead of finishing here, we start the finalization process.
+                // The loading screen will continue until finalization is complete.
+                finalizeVideo(videoUri);
             } else {
                 setError("Video generation finished, but no video was returned. The request may have been refused.");
+                setIsPolling(false);
             }
         }
 
         return () => clearTimeout(timeoutId);
 
-    }, [isPolling, operation, prompt, setVideoGenerationResult, incrementToolUsage, addCreation]);
+    }, [isPolling, operation]);
 
     const runGenerateVideo = async () => {
         if (!prompt) {
