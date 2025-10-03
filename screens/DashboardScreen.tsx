@@ -29,6 +29,12 @@ const createCreationSummary = (item: CreationHistoryItem) => {
 
     const result = item.result;
 
+    // Handle the case where the full result hasn't been loaded yet.
+    if (!result) {
+        summary.result = 'Details are loading.';
+        return summary;
+    }
+
     // FIX: The 'in' operator correctly narrows the type of 'result' to NewProductLaunchWorkflowResult,
     // so we can access 'campaign' directly without an unsafe cast.
     if ('campaign' in result && 'socialPosts' in result) { // NewProductLaunchWorkflowResult
@@ -84,6 +90,11 @@ const ToolIcon: React.FC<{ tool: Tool, className?: string }> = ({ tool, classNam
 
 const getCreationDetails = (item: CreationHistoryItem): string => {
     const result = item.result;
+
+    // Handle the case where the full result hasn't been loaded yet.
+    if (!result) {
+        return 'Loading details...';
+    }
 
     // FIX: The 'in' operator correctly narrows the type of 'result' to NewProductLaunchWorkflowResult,
     // allowing direct and safe access to the 'campaign' property.
@@ -184,7 +195,7 @@ const SmartSuggestions: React.FC<{ setActiveScreen: (s: Screen) => void }> = ({ 
 
     useEffect(() => {
         const lastCreation = history[0];
-        if (!lastCreation) {
+        if (!lastCreation || !lastCreation.result) { // Also wait for the result to be loaded
             setIsLoading(false);
             return;
         }

@@ -24,64 +24,62 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
   useEffect(() => {
     const fetchHistory = async () => {
       if (user) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          console.warn('Aborting history fetch due to timeout (10 seconds).');
-          controller.abort();
-        }, 10000); // 10-second timeout
-
         try {
-          // --- Two-step query optimization to avoid timeouts on throttled databases ---
-          
-          // Step 1: Fetch only the IDs of the most recent items.
-          const { data: idData, error: idError } = await supabase
+          // Step 1: Fetch metadata first for a fast initial load.
+          // This query is lightweight and should not time out.
+          const { data: metadata, error: metadataError } = await supabase
             .from('creations')
-            .select('id')
+            .select('id, user_id, tool, timestamp') // Omit the large 'result' column
             .eq('user_id', user.id)
             .order('timestamp', { ascending: false })
-            .limit(MAX_HISTORY_ITEMS)
-            .abortSignal(controller.signal);
+            .limit(MAX_HISTORY_ITEMS);
 
-          if (idError) throw idError;
-          if (!idData || idData.length === 0) {
-            setHistory([]);
-            return;
-          }
+          if (metadataError) throw metadataError;
 
-          // Step 2: Fetch the full data for only those specific IDs.
-          const ids = idData.map(item => item.id);
-          const { data, error } = await supabase
-            .from('creations')
-            .select('id, user_id, tool, timestamp, result')
-            .in('id', ids)
-            .order('timestamp', { ascending: false })
-            .abortSignal(controller.signal);
-
-          if (error) throw error;
-          
-          const validData = data ? data.filter(item => item.result != null) : [];
-          
-          const mappedHistory: CreationHistoryItem[] = validData.map((item: any) => ({
+          // Map to initial history items with result as null.
+          const initialHistory: CreationHistoryItem[] = (metadata || []).map((item: any) => ({
             id: item.id,
             user_id: item.user_id,
             tool: item.tool,
             timestamp: new Date(item.timestamp).getTime(),
-            result: item.result,
+            result: null, // Set result to null initially
           }));
+          
+          setHistory(initialHistory); // Set the initial state so the UI can render quickly
 
-          setHistory(mappedHistory);
+          // Step 2: Asynchronously fetch the full 'result' for each item individually.
+          // This prevents one large item from blocking all others.
+          initialHistory.forEach(async (item) => {
+            try {
+              const { data: resultData, error: resultError } = await supabase
+                .from('creations')
+                .select('result')
+                .eq('id', item.id)
+                .single();
+
+              if (resultError) throw resultError;
+
+              if (resultData && resultData.result) {
+                // Update the specific item in the history state with its full result
+                setHistory(prevHistory =>
+                  prevHistory.map(historyItem =>
+                    historyItem.id === item.id
+                      ? { ...historyItem, result: resultData.result }
+                      : historyItem
+                  )
+                );
+              }
+            } catch (error) {
+              console.warn(`Failed to fetch full data for creation ID ${item.id}:`, error.message);
+              // Item will remain in the list with a null result, which is handled by the UI.
+            }
+          });
         } catch (error) {
-          if (error.name === 'AbortError' || (error.message && error.message.includes('timeout'))) {
-            console.warn('Could not fetch creation history due to timeout. This may be due to platform usage limits.');
-          } else {
-            console.error("Error fetching creation history:", JSON.stringify(error, null, 2));
-          }
-          setHistory([]);
-        } finally {
-            clearTimeout(timeoutId);
+          console.error("Error fetching creation history metadata:", error.message);
+          setHistory([]); // Clear history on error
         }
       } else {
-        setHistory([]);
+        setHistory([]); // Clear history if no user
       }
     };
     fetchHistory();
