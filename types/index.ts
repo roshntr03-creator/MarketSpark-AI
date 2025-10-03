@@ -55,14 +55,14 @@ export interface SocialPost {
 }
 
 export interface EditedImage {
-  original: string; // base64 data URL
-  edited: string; // base64 data URL
+  original: string; // public URL
+  edited: string; // public URL
   prompt: string;
   responseText?: string;
 }
 
 export interface GeneratedImage {
-    image: string; // base64 data URL
+    image: string; // public URL
     prompt: string;
 }
 

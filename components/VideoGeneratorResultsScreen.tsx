@@ -8,6 +8,7 @@ import { useTranslations } from '../contexts/LanguageProvider';
 import ToolHeader from './ToolHeader';
 import ScheduleModal from './ScheduleModal';
 import { PlusCircleIcon } from './icons';
+import { supabase } from '../lib/supabaseClient';
 import Spinner from './Spinner';
 
 const VideoGeneratorResultsScreen: React.FC = () => {
@@ -15,10 +16,9 @@ const VideoGeneratorResultsScreen: React.FC = () => {
     const { t } = useTranslations();
     const [isDownloading, setIsDownloading] = useState(false);
     const [isScheduling, setIsScheduling] = useState(false);
-    const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-    const [videoSrc, setVideoSrc] = useState<string | null>(null);
-    const [isLoadingVideo, setIsLoadingVideo] = useState(true);
-    const [videoError, setVideoError] = useState<string | null>(null);
+    const [playbackError, setPlaybackError] = useState<string | null>(null);
+    const [localVideoUrl, setLocalVideoUrl] = useState<string | null>(null);
+    const [isLoadingLocalUrl, setIsLoadingLocalUrl] = useState(false);
 
     if (!videoGenerationResult) {
         return null;
@@ -28,62 +28,95 @@ const VideoGeneratorResultsScreen: React.FC = () => {
     const { videoUri, prompt } = result;
 
     useEffect(() => {
-        if (!videoUri) {
-            setVideoError("Video URI is missing.");
-            setIsLoadingVideo(false);
-            return;
-        }
+        let objectUrl: string | null = null;
+        
+        const loadVideoAsBlob = async () => {
+            if (!videoUri) {
+                setPlaybackError("The video URI is missing.");
+                return;
+            };
 
-        const processVideoUri = async () => {
-            setIsLoadingVideo(true);
-            setVideoError(null);
+            // This approach downloads the video as a blob to bypass potential CORS issues
+            // when streaming directly from the public URL.
             try {
-                // The backend now returns a direct public URL.
-                // We use it for playback and also fetch it as a blob for download functionality.
-                setVideoSrc(videoUri); 
+                setIsLoadingLocalUrl(true);
+                setPlaybackError(null);
+
+                // Extract path from the public URL
+                const url = new URL(videoUri);
+                const path = url.pathname.split('/public/generated_creations/')[1];
                 
-                const response = await fetch(videoUri);
-                 if (!response.ok) {
-                    throw new Error(`Failed to fetch video file: ${response.status} ${response.statusText}`);
+                if (!path) {
+                    throw new Error("Could not parse video path from URL.");
                 }
-                const blob = await response.blob();
-                setVideoBlob(blob);
-            } catch (error) {
-                console.error("Failed to load video for playback:", error);
-                setVideoError(error instanceof Error ? error.message : "Could not load video.");
+
+                const { data: blob, error } = await supabase.storage
+                    .from('generated_creations')
+                    .download(path);
+
+                if (error) throw error;
+                if (!blob) throw new Error("Downloaded file is empty.");
+
+                objectUrl = URL.createObjectURL(blob);
+                setLocalVideoUrl(objectUrl);
+
+            } catch (err) {
+                console.error("Failed to load video as blob:", err);
+                // Fallback to trying the direct URL if blob download fails, with an error message.
+                setLocalVideoUrl(videoUri); 
+                setPlaybackError(`Failed to load video. This is likely a CORS or permissions issue in Supabase Storage settings. Error: ${err.message}`);
             } finally {
-                setIsLoadingVideo(false);
+                setIsLoadingLocalUrl(false);
             }
         };
 
-        processVideoUri();
+        loadVideoAsBlob();
 
+        return () => {
+            // Cleanup the object URL to prevent memory leaks
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
     }, [videoUri]);
-
 
     const handleStartNew = () => {
         setVideoGenerationResult(null);
     };
     
     const handleDownload = async () => {
-        if (!videoBlob) {
-            alert("Video data is not available for download.");
+        if (!videoUri) {
+            alert("Video source is not available.");
             return;
         }
         setIsDownloading(true);
         try {
-            const url = window.URL.createObjectURL(videoBlob);
+            // Extract path from the public URL
+            const url = new URL(videoUri);
+            const path = url.pathname.split('/public/generated_creations/')[1];
+            if (!path) throw new Error("Could not parse video path from URL.");
+
+            // Use Supabase client to download, which handles auth and bypasses CORS
+            const { data: blob, error } = await supabase.storage
+                .from('generated_creations')
+                .download(path);
+            
+            if (error) throw error;
+            if (!blob) throw new Error("Downloaded file is empty.");
+
+            // Create a temporary link to trigger the download
+            const blobUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
-            a.href = url;
+            a.href = blobUrl;
             a.download = `generated-video-${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
+            window.URL.revokeObjectURL(blobUrl);
             document.body.removeChild(a);
         } catch (error) {
             console.error("Download failed:", error);
-            alert("Failed to download video.");
+            alert(`Failed to download video. Please check the console for details. Error: ${error.message}`);
         } finally {
             setIsDownloading(false);
         }
@@ -102,23 +135,27 @@ const VideoGeneratorResultsScreen: React.FC = () => {
             <div className="space-y-6 px-4 sm:px-0">
                  <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/80 dark:border-white/10 rounded-xl overflow-hidden p-4">
                     <div className="w-full aspect-video rounded-lg bg-black flex items-center justify-center">
-                        {isLoadingVideo ? (
-                            <div className="text-center">
+                        {isLoadingLocalUrl ? (
+                            <div className="text-center p-4">
                                 <Spinner />
-                                <p className="text-gray-300 mt-4">Loading video...</p>
+                                <p className="mt-4 text-gray-400">Loading video securely...</p>
                             </div>
-                        ) : videoError ? (
+                        ) : playbackError ? (
                             <div className="text-center text-red-400 p-4">
                                 <p className="font-bold">Failed to load video</p>
-                                <p className="text-sm">{videoError}</p>
+                                <p className="text-sm">{playbackError}</p>
                             </div>
-                        ) : (
+                        ) : localVideoUrl ? (
                             <video 
-                                src={videoSrc || ''}
+                                src={localVideoUrl}
                                 controls 
                                 playsInline
                                 className="w-full h-full"
                             />
+                        ) : (
+                             <div className="text-center text-gray-400 p-4">
+                                <p className="font-bold">Video Not Available</p>
+                            </div>
                         )}
                     </div>
                  </div>
@@ -132,7 +169,7 @@ const VideoGeneratorResultsScreen: React.FC = () => {
                     </button>
                     <button 
                         onClick={handleDownload}
-                        disabled={isDownloading || !videoBlob}
+                        disabled={isDownloading || !localVideoUrl}
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isDownloading ? `${t.loadingTitle}...` : t.downloadVideo}

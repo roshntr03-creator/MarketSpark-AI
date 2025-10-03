@@ -14,6 +14,8 @@ import type { EditedImage } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
+import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -30,6 +32,7 @@ const ImageEditorScreen: React.FC = () => {
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -46,19 +49,17 @@ const ImageEditorScreen: React.FC = () => {
     ];
 
     useEffect(() => {
-        const dataUrlToFile = async (dataUrl: string, fileName: string): Promise<File> => {
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-            return new File([blob], fileName, { type: blob.type });
-        };
-
         if (initialImageForEditor) {
-            setImagePreview(initialImageForEditor.edited);
+            setImagePreview(initialImageForEditor.edited); // This is now a URL
             setPrompt(initialImageForEditor.prompt);
-            // Convert data URL back to a File object for `editImage` service
-            dataUrlToFile(initialImageForEditor.edited, `edited-image-${Date.now()}.png`)
-                .then(file => setImageFile(file));
-            // Clear the initial state to prevent re-triggering
+            
+            // We need to re-fetch the image blob to allow editing it again.
+            fetch(initialImageForEditor.edited)
+                .then(res => res.blob())
+                .then(blob => new File([blob], `edited-image-${Date.now()}.png`, { type: blob.type }))
+                .then(file => setImageFile(file))
+                .catch(err => console.error("Could not refetch image for editing:", err));
+
             setInitialImageForEditor(null);
         }
     }, [initialImageForEditor, setInitialImageForEditor]);
@@ -75,19 +76,38 @@ const ImageEditorScreen: React.FC = () => {
     }, [imageFile]);
 
     const runImageEdit = async () => {
-        if (!imageFile || !prompt) {
-            setError('Image and prompt are required.');
+        if (!imageFile || !prompt || !user) {
+            setError('Image, prompt, and user session are required.');
             return;
         }
         setIsLoading(true);
         setError(null);
         try {
+            // 1. Generate the edited image
             const base64Image = await fileToBase64(imageFile);
             const result = await editImage(base64Image, imageFile.type, prompt, brandPersona, lang);
             
+            // 2. Upload original and edited images to storage
+            const uploadBlob = async (blob: Blob, suffix: string): Promise<string> => {
+                const filePath = `${user.id}/${crypto.randomUUID()}-${suffix}.png`;
+                const { error: uploadError } = await supabase.storage.from('generated_creations').upload(filePath, blob, { contentType: blob.type });
+                if (uploadError) throw uploadError;
+                const { data: { publicUrl } } = supabase.storage.from('generated_creations').getPublicUrl(filePath);
+                if (!publicUrl) throw new Error(`Could not get public URL for ${suffix}`);
+                return publicUrl;
+            };
+
+            const editedImageBlob = await (await fetch(`data:image/png;base64,${result.editedImageBase64}`)).blob();
+
+            const [originalUrl, editedUrl] = await Promise.all([
+                uploadBlob(imageFile, 'original'),
+                uploadBlob(editedImageBlob, 'edited')
+            ]);
+
+            // 3. Create the result payload with URLs
             const resultPayload: EditedImage = {
-                original: `data:${imageFile.type};base64,${base64Image}`,
-                edited: `data:${imageFile.type};base64,${result.editedImageBase64}`,
+                original: originalUrl,
+                edited: editedUrl,
                 prompt: prompt,
                 responseText: result.text || undefined,
             };

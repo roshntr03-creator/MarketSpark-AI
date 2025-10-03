@@ -14,6 +14,8 @@ import type { GeneratedImage } from '../types/index';
 import ToolHeader from '../components/ToolHeader';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
+import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
 
 const ImageGeneratorScreen: React.FC = () => {
     const { t } = useTranslations();
@@ -21,6 +23,7 @@ const ImageGeneratorScreen: React.FC = () => {
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,13 +40,41 @@ const ImageGeneratorScreen: React.FC = () => {
             setError('Prompt is required.');
             return;
         }
+        if (!user) {
+            setError('You must be logged in to generate images.');
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
+            // 1. Generate image from Gemini
             const result = await generateImage(prompt, brandPersona);
             
+            // 2. Convert base64 to blob for uploading
+            const imageUrl = `data:image/png;base64,${result.imageBase64}`;
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+
+            // 3. Upload blob to Supabase Storage
+            const filePath = `${user.id}/${crypto.randomUUID()}.png`;
+            const { error: uploadError } = await supabase.storage
+                .from('generated_creations')
+                .upload(filePath, blob, { contentType: 'image/png', upsert: false });
+
+            if (uploadError) throw uploadError;
+
+            // 4. Get the public URL of the uploaded file
+            const { data: publicUrlData } = supabase.storage
+                .from('generated_creations')
+                .getPublicUrl(filePath);
+            
+            if (!publicUrlData || !publicUrlData.publicUrl) {
+                throw new Error("Could not get public URL for the uploaded image.");
+            }
+
+            // 5. Save the URL, not the base64 data
             const resultPayload: GeneratedImage = {
-                image: `data:image/png;base64,${result.imageBase64}`,
+                image: publicUrlData.publicUrl,
                 prompt: prompt,
             };
             const creation = addCreation('image-generator', resultPayload);

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import type { Tool, CreationHistoryItem, CreationResult, GeneratedVideo, GeneratedImage, EditedImage, WorkflowResult, NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult } from '../types/index';
+import type { Tool, CreationHistoryItem, CreationResult } from '../types/index';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 
@@ -24,16 +24,23 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
   useEffect(() => {
     const fetchHistory = async () => {
       if (user) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.warn('Aborting history fetch due to timeout (10 seconds).');
+          controller.abort();
+        }, 10000); // 10-second timeout
+
         try {
           // --- Two-step query optimization to avoid timeouts on throttled databases ---
           
-          // Step 1: Fetch only the IDs of the most recent items. This is very fast.
+          // Step 1: Fetch only the IDs of the most recent items.
           const { data: idData, error: idError } = await supabase
             .from('creations')
             .select('id')
             .eq('user_id', user.id)
             .order('timestamp', { ascending: false })
-            .limit(MAX_HISTORY_ITEMS);
+            .limit(MAX_HISTORY_ITEMS)
+            .abortSignal(controller.signal);
 
           if (idError) throw idError;
           if (!idData || idData.length === 0) {
@@ -47,7 +54,8 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
             .from('creations')
             .select('id, user_id, tool, timestamp, result')
             .in('id', ids)
-            .order('timestamp', { ascending: false }); // Re-apply order
+            .order('timestamp', { ascending: false })
+            .abortSignal(controller.signal);
 
           if (error) throw error;
           
@@ -63,8 +71,14 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
 
           setHistory(mappedHistory);
         } catch (error) {
-          console.error("Error fetching creation history:", JSON.stringify(error, null, 2));
+          if (error.name === 'AbortError' || (error.message && error.message.includes('timeout'))) {
+            console.warn('Could not fetch creation history due to timeout. This may be due to platform usage limits.');
+          } else {
+            console.error("Error fetching creation history:", JSON.stringify(error, null, 2));
+          }
           setHistory([]);
+        } finally {
+            clearTimeout(timeoutId);
         }
       } else {
         setHistory([]);
@@ -93,38 +107,11 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
 
     // Asynchronously insert into DB and then sync the real ID back to the UI state
     const syncWithDb = async () => {
-        // Create a deep, sanitized copy for storage to avoid modifying the object returned to the UI.
-        const creationToStore = JSON.parse(JSON.stringify(newCreation));
-        const timestampString = new Date(creationToStore.timestamp).toLocaleString();
-
-        // To save storage space and avoid very large JSON objects in the DB,
-        // we replace large base64 data with placeholder strings.
-        if (tool === 'video-generator' || tool === 'virtual-ambassador-generator') {
-            (creationToStore.result as GeneratedVideo).videoUri = `Video generated on ${timestampString}`;
-        } else if (tool === 'image-generator') {
-            (creationToStore.result as GeneratedImage).image = `Image generated on ${timestampString}`;
-        } else if (tool === 'image-editor') {
-            const editedImageResult = creationToStore.result as EditedImage;
-            editedImageResult.original = `Original image from ${timestampString}`;
-            editedImageResult.edited = `Edited image from ${timestampString}`;
-        } else if (tool === 'workflow') {
-            const workflowResult = creationToStore.result as WorkflowResult;
-            if ('images' in workflowResult && Array.isArray(workflowResult.images)) {
-                 (workflowResult as NewProductLaunchWorkflowResult).images.forEach((img) => {
-                    img.image = `Image for post generated on ${timestampString}`;
-                });
-            } else if ('carouselImages' in workflowResult && Array.isArray(workflowResult.carouselImages)) {
-                 (workflowResult as BlogPostRepurposingWorkflowResult).carouselImages.forEach((img) => {
-                    img.image = `Image for post generated on ${timestampString}`;
-                });
-            }
-        }
-    
         try {
             const { data, error } = await supabase.from('creations').insert({
-                user_id: creationToStore.user_id,
-                tool: creationToStore.tool,
-                result: creationToStore.result,
+                user_id: newCreation.user_id,
+                tool: newCreation.tool,
+                result: newCreation.result, // The result now contains URLs, so it's safe to store directly.
             }).select('id').single();
 
             if (error) throw error;

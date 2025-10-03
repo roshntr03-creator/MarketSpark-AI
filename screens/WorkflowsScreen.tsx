@@ -12,7 +12,9 @@ import ToolHeader from '../components/ToolHeader';
 import ToolCard from '../components/ToolCard';
 import { useCreationHistory } from '../contexts/CreationHistoryProvider';
 import { useBrand } from '../contexts/BrandProvider';
-import type { NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult, GeneratedImage } from '../types/index';
+import { useAuth } from '../contexts/AuthProvider';
+import { supabase } from '../lib/supabaseClient';
+import type { NewProductLaunchWorkflowResult, BlogPostRepurposingWorkflowResult, GeneratedImage, GeneratedImageWithPost } from '../types/index';
 import { WorkflowIcon, RocketLaunchIcon, DocumentDuplicateIcon } from '../components/icons';
 
 const WorkflowLoadingScreen: React.FC<{ message: string }> = ({ message }) => {
@@ -32,6 +34,7 @@ const NewProductLaunchWorkflow: React.FC = () => {
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
 
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
@@ -45,6 +48,10 @@ const NewProductLaunchWorkflow: React.FC = () => {
             setError('Product name and description are required.');
             return;
         }
+        if (!user) {
+            setError('You must be logged in to run a workflow.');
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -56,19 +63,23 @@ const NewProductLaunchWorkflow: React.FC = () => {
             const socialPosts = await generateSocialPosts(socialPostTopic, 'Instagram', 'Excited', brandPersona, lang);
 
             setLoadingMessage('Step 3/3: Designing images for each post...');
-            const imagePromises = socialPosts.map(post => {
+            const imagePromises = socialPosts.map(async (post) => {
                 const imagePrompt = `An eye-catching, high-quality image for an Instagram post about a new product. The post's caption is: "${post.content}". The image should be visually appealing and relevant to the caption.`;
-                return generateImage(imagePrompt, brandPersona).then(imgResult => ({ ...imgResult, forPostContent: post.content }));
-            });
-            const imageResults = await Promise.all(imagePromises);
-            
-            const images = imageResults.map(res => ({
-                image: `data:image/png;base64,${res.imageBase64}`,
-                prompt: res.forPostContent,
-                forPostContent: res.forPostContent,
-            }));
+                const imgResult = await generateImage(imagePrompt, brandPersona);
 
-            const result: NewProductLaunchWorkflowResult = { campaign, socialPosts, images };
+                const imageUrl = `data:image/png;base64,${imgResult.imageBase64}`;
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const filePath = `${user.id}/${crypto.randomUUID()}.png`;
+                await supabase.storage.from('generated_creations').upload(filePath, blob, { contentType: 'image/png' });
+                const { data: { publicUrl } } = supabase.storage.from('generated_creations').getPublicUrl(filePath);
+
+                return { image: publicUrl, prompt: imagePrompt, forPostContent: post.content };
+            });
+
+            const images = await Promise.all(imagePromises);
+
+            const result: NewProductLaunchWorkflowResult = { campaign, socialPosts, images: images as GeneratedImageWithPost[] };
             const creation = addCreation('workflow', result);
             setWorkflowResult({ result, creation });
             incrementToolUsage('workflow');
@@ -127,6 +138,7 @@ const BlogPostRepurposingWorkflow: React.FC = () => {
     const { incrementToolUsage } = useUsageStats();
     const { addCreation } = useCreationHistory();
     const { brandPersona } = useBrand();
+    const { user } = useAuth();
 
     const [blogPost, setBlogPost] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -138,6 +150,10 @@ const BlogPostRepurposingWorkflow: React.FC = () => {
             setError('Blog post content is required.');
             return;
         }
+        if (!user) {
+            setError('You must be logged in to run a workflow.');
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -145,17 +161,22 @@ const BlogPostRepurposingWorkflow: React.FC = () => {
             const repurposedContent = await repurposeContent(blogPost, brandPersona, lang);
 
             setLoadingMessage('Step 2/2: Generating images for Instagram carousel...');
-            const imagePromises = repurposedContent.instagramCarousel.map(slide => {
-                return generateImage(slide.imageIdea, brandPersona);
+            const imagePromises = repurposedContent.instagramCarousel.map(async (slide) => {
+                const imgResult = await generateImage(slide.imageIdea, brandPersona);
+                
+                const imageUrl = `data:image/png;base64,${imgResult.imageBase64}`;
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const filePath = `${user.id}/${crypto.randomUUID()}.png`;
+                await supabase.storage.from('generated_creations').upload(filePath, blob, { contentType: 'image/png' });
+                const { data: { publicUrl } } = supabase.storage.from('generated_creations').getPublicUrl(filePath);
+
+                return { image: publicUrl, prompt: slide.imageIdea };
             });
-            const imageResults = await Promise.all(imagePromises);
 
-            const carouselImages: GeneratedImage[] = imageResults.map((res, index) => ({
-                image: `data:image/png;base64,${res.imageBase64}`,
-                prompt: repurposedContent.instagramCarousel[index].imageIdea,
-            }));
+            const carouselImages = await Promise.all(imagePromises);
 
-            const result: BlogPostRepurposingWorkflowResult = { repurposedContent, carouselImages };
+            const result: BlogPostRepurposingWorkflowResult = { repurposedContent, carouselImages: carouselImages as GeneratedImage[] };
             const creation = addCreation('workflow', result);
             setWorkflowResult({ result, creation });
             incrementToolUsage('workflow');
