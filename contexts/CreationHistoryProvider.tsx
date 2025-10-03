@@ -26,7 +26,6 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
       if (user) {
         try {
           // Step 1: Fetch metadata first for a fast initial load.
-          // This query is lightweight and should not time out.
           const { data: metadata, error: metadataError } = await supabase
             .from('creations')
             .select('id, user_id, tool, timestamp') // Omit the large 'result' column
@@ -36,7 +35,6 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
 
           if (metadataError) throw metadataError;
 
-          // Map to initial history items with result as null.
           const initialHistory: CreationHistoryItem[] = (metadata || []).map((item: any) => ({
             id: item.id,
             user_id: item.user_id,
@@ -48,18 +46,29 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
           setHistory(initialHistory); // Set the initial state so the UI can render quickly
 
           // Step 2: Asynchronously fetch the full 'result' for each item individually.
-          // This prevents one large item from blocking all others.
           initialHistory.forEach(async (item) => {
+            const controller = new AbortController();
+            // Set a client-side timeout slightly less than the typical server timeout (8-10s).
+            const timeoutId = setTimeout(() => controller.abort(), 7000);
+
             try {
               const { data: resultData, error: resultError } = await supabase
                 .from('creations')
                 .select('result')
                 .eq('id', item.id)
+                .abortSignal(controller.signal)
                 .single();
+              
+              clearTimeout(timeoutId); // Clear the timeout if the request completes in time
 
-              if (resultError) throw resultError;
-
-              if (resultData && resultData.result) {
+              if (resultError) {
+                  // Gracefully handle client-side timeouts without throwing an error.
+                  if (resultError.name === 'AbortError' || resultError.message.includes('aborted')) {
+                      console.warn(`Client-side timeout: Fetching details for creation ID ${item.id} took too long.`);
+                  } else {
+                     throw resultError; // Re-throw other, unexpected errors.
+                  }
+              } else if (resultData && resultData.result) {
                 // Update the specific item in the history state with its full result
                 setHistory(prevHistory =>
                   prevHistory.map(historyItem =>
@@ -70,6 +79,7 @@ export const CreationHistoryProvider: React.FC<{ children: ReactNode }> = ({ chi
                 );
               }
             } catch (error) {
+              clearTimeout(timeoutId);
               console.warn(`Failed to fetch full data for creation ID ${item.id}:`, error.message);
               // Item will remain in the list with a null result, which is handled by the UI.
             }
